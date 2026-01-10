@@ -7,69 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
+        
+        body { font-family: 'Inter', sans-serif; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .gradient-text {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
+        .glass-effect { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .grid-pattern {
             background-image: 
                 linear-gradient(rgba(102, 126, 234, 0.1) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(102, 126, 234, 0.1) 1px, transparent 1px);
             background-size: 50px 50px;
         }
-
-        .pulse-glow {
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
-            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.8); }
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        nav {
-            backdrop-filter: blur(10px);
-            background: rgba(17, 24, 39, 0.8);
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); } 50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.8); } }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        nav { backdrop-filter: blur(10px); background: rgba(17, 24, 39, 0.8); }
+        .pill { animation: pill-fade 1.8s ease-out forwards; }
+        @keyframes pill-fade {
+            0% { opacity: 0; transform: translate(-50%, -6px) scale(0.95); }
+            10% { opacity: 1; transform: translate(-50%, -8px) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -12px) scale(0.98); }
         }
     </style>
 </head>
@@ -98,7 +63,6 @@
                             <circle cx="45" cy="40" r="8" fill="#7f1d1d"></circle>
                             <rect x="-20" y="28" width="20" height="4" fill="#3b82f6"></rect>
                         </g>
-                        <!-- Energy lines between robots -->
                         <line x1="110" y1="108" x2="90" y2="108" stroke="#fbbf24" stroke-width="3" opacity="0.8">
                             <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite"></animate>
                         </line>
@@ -108,7 +72,7 @@
                         <p class="text-xs text-gray-400">AI Battle Platform</p>
                     </div>
                 </div>
-
+                
                 <!-- Navigation Links -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#about" class="hover:text-purple-400 transition">About</a>
@@ -116,7 +80,7 @@
                     <a href="#pricing" class="hover:text-purple-400 transition">Pricing</a>
                     <a href="#blog" class="hover:text-purple-400 transition">Blog</a>
                 </div>
-
+                
                 <!-- Sign In Button -->
                 <button class="gradient-bg px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition">
                     Sign In
@@ -152,7 +116,7 @@
                         Посмотреть Demo
                     </button>
                 </div>
-
+                
                 <!-- Stats -->
                 <div class="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
                     <div class="glass-effect rounded-lg p-4">
@@ -179,35 +143,43 @@
                 <h2 class="text-5xl font-orbitron font-bold mb-4">Как это работает?</h2>
                 <p class="text-xl text-gray-400">Простая концепция. Бесконечные возможности.</p>
             </div>
-
-            <div class="grid md:grid-cols-2 gap-12 items-center">
+            
+            <div class="grid md:grid-cols-2 gap-12 items-start">
                 <!-- Animated Game Demo -->
                 <div class="relative">
                     <div class="aspect-square bg-gray-900 rounded-2xl border-2 border-purple-500 p-6 shadow-2xl">
                         <div id="game-demo" class="grid grid-cols-10 gap-1 h-full">
-                            <!-- Grid cells will be generated by JavaScript -->
+                            <!-- Grid cells generated by JavaScript -->
                         </div>
                     </div>
-                    <div class="mt-4 glass-effect rounded-lg p-4 text-center">
-                        <div class="text-sm text-gray-400 mb-2">Симуляция боя в реальном времени</div>
+                    <div class="mt-4 glass-effect rounded-lg p-4">
+                        <div class="text-center text-sm text-gray-400 mb-2">Симуляция боя в реальном времени</div>
                         <div class="flex justify-around text-xs">
-                            <div>
-                                <span class="inline-block w-3 h-3 bg-blue-500 rounded mr-1"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-3 h-3 bg-blue-500 rounded"></span>
                                 <span class="text-blue-400">Робот-1: <span id="robot1-hp">100</span> HP</span>
                             </div>
-                            <div>
-                                <span class="inline-block w-3 h-3 bg-red-500 rounded mr-1"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-3 h-3 bg-red-500 rounded"></span>
                                 <span class="text-red-400">Робот-2: <span id="robot2-hp">100</span> HP</span>
                             </div>
                         </div>
-                        <div class="mt-2 text-xs text-purple-400">
+                        <div class="mt-2 text-xs text-purple-400 text-center">
                             Ход: <span id="turn-number">1</span>
+                        </div>
+
+                        <!-- ACTION LOG -->
+                        <div class="mt-4">
+                            <div class="text-xs text-gray-400 mb-1">Лог действий</div>
+                            <div id="action-log" class="bg-gray-900/60 border border-white/10 rounded-lg p-3 max-h-40 overflow-auto space-y-1 text-sm">
+                                <!-- log rows -->
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Game Rules -->
-                <div class="space-y-6">
+                
+                <!-- Game Rules - sticky to arena level -->
+                <div class="space-y-6 md:sticky md:top-28 self-start">
                     <div class="glass-effect rounded-xl p-6 card-hover">
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 rounded-lg gradient-bg flex items-center justify-center text-2xl font-bold">1</div>
@@ -217,7 +189,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="glass-effect rounded-xl p-6 card-hover">
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 rounded-lg gradient-bg flex items-center justify-center text-2xl font-bold">2</div>
@@ -227,7 +199,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="glass-effect rounded-xl p-6 card-hover">
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 rounded-lg gradient-bg flex items-center justify-center text-2xl font-bold">3</div>
@@ -237,7 +209,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="glass-effect rounded-xl p-6 card-hover">
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 rounded-lg gradient-bg flex items-center justify-center text-2xl font-bold">4</div>
@@ -249,7 +221,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <!-- Features Grid -->
             <div class="grid md:grid-cols-3 gap-8 mt-20">
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
@@ -258,35 +230,35 @@
                     <p class="text-gray-400">1 энергия</p>
                     <p class="text-sm text-gray-500 mt-2">Перемещение в 4 направлениях: вверх, вниз, влево, вправо</p>
                 </div>
-
+                
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
                     <div class="w-16 h-16 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center text-3xl">🎯</div>
                     <h3 class="text-xl font-bold mb-2">Выстрел</h3>
                     <p class="text-gray-400">3 энергии · 20 урона</p>
                     <p class="text-sm text-gray-500 mt-2">8 направлений стрельбы, луч проходит через всё поле</p>
                 </div>
-
+                
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
                     <div class="w-16 h-16 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center text-3xl">📡</div>
                     <h3 class="text-xl font-bold mb-2">Сканирование</h3>
                     <p class="text-gray-400">2 энергии · радиус 3</p>
                     <p class="text-sm text-gray-500 mt-2">Обнаружение врагов и ловушек в области</p>
                 </div>
-
+                
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
                     <div class="W-16 h-16 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center text-3xl">🛡️</div>
                     <h3 class="text-xl font-bold mb-2">Щит</h3>
                     <p class="text-gray-400">4 энергии · 2 хода</p>
                     <p class="text-sm text-gray-500 mt-2">Блокирует один выстрел полностью</p>
                 </div>
-
+                
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
                     <div class="w-16 h-16 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center text-3xl">💣</div>
                     <h3 class="text-xl font-bold mb-2">Ловушка</h3>
                     <p class="text-gray-400">3 энергии · 15 урона</p>
                     <p class="text-sm text-gray-500 mt-2">Устанавливается на текущей позиции</p>
                 </div>
-
+                
                 <div class="glass-effect rounded-xl p-8 text-center card-hover">
                     <div class="w-16 h-16 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center text-3xl">🧠</div>
                     <h3 class="text-xl font-bold mb-2">AI Training</h3>
@@ -304,7 +276,7 @@
                 <h2 class="text-5xl font-orbitron font-bold mb-4">Мощный HTTP API</h2>
                 <p class="text-xl text-gray-400">Полный контроль через RESTful API</p>
             </div>
-
+            
             <div class="grid lg:grid-cols-2 gap-12">
                 <!-- API Info -->
                 <div class="space-y-6">
@@ -312,96 +284,69 @@
                         <h3 class="text-2xl font-bold mb-4">🚀 Быстрый старт</h3>
                         <div class="bg-gray-950 rounded-lg p-4 font-mono text-sm overflow-x-auto">
                             <div class="text-green-400"># Создать игру</div>
-                            <div class="text-gray-400">curl -X POST https://api.robot-arena.dev/games \</div>
-                            <div class="text-gray-400 ml-4">-H "Content-Type: application/json" \</div>
-                            <div class="text-gray-400 ml-4">-d '{"robot1_name": "Terminator"}'</div>
+                            <div class="text-gray-400">curl -X POST https://api.robot-arena.dev/games \\</div>
+                            <div class="text-gray-400 ml-4">-H "Content-Type: application/json" \\</div>
+                            <div class="text-gray-400 ml-4">-d '{\"robot1_name\": \"Terminator\"}'</div>
                             <br>
                             <div class="text-green-400"># Движение</div>
-                            <div class="text-gray-400">curl -X POST .../games/{id}/move \</div>
-                            <div class="text-gray-400 ml-4">-H "Authorization: Bearer {token}" \</div>
-                            <div class="text-gray-400 ml-4">-d '{"direction": "UP"}'</div>
+                            <div class="text-gray-400">curl -X POST .../games/{id}/move \\</div>
+                            <div class="text-gray-400 ml-4">-H "Authorization: Bearer {token}" \\</div>
+                            <div class="text-gray-400 ml-4">-d '{\"direction\": \"UP\"}'</div>
                         </div>
                     </div>
-
+                    
                     <div class="glass-effect rounded-xl p-6">
                         <h3 class="text-2xl font-bold mb-4">📚 Библиотеки</h3>
                         <div class="space-y-3">
                             <div class="flex items-center space-x-3 text-gray-300">
-                                <span class="text-2xl">🐍</span>
-                                <span>Python SDK</span>
+                                <span class="text-2xl">🐍</span><span>Python SDK</span>
                                 <span class="ml-auto px-3 py-1 bg-green-600 rounded-full text-xs">Стабильная</span>
                             </div>
                             <div class="flex items-center space-x-3 text-gray-300">
-                                <span class="text-2xl">📜</span>
-                                <span>JavaScript/Node.js SDK</span>
+                                <span class="text-2xl">📜</span><span>JavaScript/Node.js SDK</span>
                                 <span class="ml-auto px-3 py-1 bg-green-600 rounded-full text-xs">Стабильная</span>
                             </div>
                             <div class="flex items-center space-x-3 text-gray-300">
-                                <span class="text-2xl">☕</span>
-                                <span>Java SDK</span>
+                                <span class="text-2xl">☕</span><span>Java SDK</span>
                                 <span class="ml-auto px-3 py-1 bg-yellow-600 rounded-full text-xs">Beta</span>
                             </div>
                             <div class="flex items-center space-x-3 text-gray-300">
-                                <span class="text-2xl">🦀</span>
-                                <span>Rust SDK</span>
+                                <span class="text-2xl">🦀</span><span>Rust SDK</span>
                                 <span class="ml-auto px-3 py-1 bg-yellow-600 rounded-full text-xs">Beta</span>
                             </div>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- API Features -->
                 <div class="space-y-4">
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">🎮</span>
-                            10+ Эндпоинтов
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">🎮</span>10+ Эндпоинтов</h4>
                         <p class="text-gray-400">Полное управление: движение, стрельба, сканирование, щиты, ловушки, состояние игры</p>
                     </div>
-
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">🔐</span>
-                            JWT Аутентификация
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">🔐</span>JWT Аутентификация</h4>
                         <p class="text-gray-400">Безопасный токен-based доступ для каждого робота</p>
                     </div>
-
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">⚡</span>
-                            WebSocket Support
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">⚡</span>WebSocket Support</h4>
                         <p class="text-gray-400">Real-time обновления состояния игры для зрителей</p>
                     </div>
-
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">📊</span>
-                            Подробная статистика
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">📊</span>Подробная статистика</h4>
                         <p class="text-gray-400">Отслеживай урон, попадания, эффективность стратегий</p>
                     </div>
-
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">🌐</span>
-                            RESTful дизайн
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">🌐</span>RESTful дизайн</h4>
                         <p class="text-gray-400">Стандартные HTTP методы, JSON формат, понятная документация</p>
                     </div>
-
                     <div class="glass-effect rounded-xl p-6 card-hover">
-                        <h4 class="text-xl font-bold mb-2 flex items-center">
-                            <span class="mr-3 text-2xl">🔄</span>
-                            Rate Limiting
-                        </h4>
+                        <h4 class="text-xl font-bold mb-2 flex items-center"><span class="mr-3 text-2xl">🔄</span>Rate Limiting</h4>
                         <p class="text-gray-400">100 запросов/мин, справедливые лимиты для всех</p>
                     </div>
                 </div>
             </div>
-
+            
             <div class="mt-12 text-center">
                 <button class="gradient-bg px-8 py-4 rounded-lg font-bold text-lg hover:scale-105 transition">
                     Открыть документацию API →
@@ -417,7 +362,7 @@
                 <h2 class="text-5xl font-orbitron font-bold mb-4">Тарифные планы</h2>
                 <p class="text-xl text-gray-400">Выбери свой уровень сражений</p>
             </div>
-
+            
             <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 <!-- Hobby -->
                 <div class="glass-effect rounded-2xl p-8 card-hover">
@@ -427,32 +372,17 @@
                         <p class="text-gray-400">Навсегда бесплатно</p>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>5 игр в день</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>1 активный робот</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Базовая статистика</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Доступ к API</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-gray-600 mr-2">×</span>
-                            <span class="text-gray-500">AI обучение</span>
-                        </li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>5 игр в день</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>1 активный робот</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Базовая статистика</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Доступ к API</span></li>
+                        <li class="flex items-center"><span class="text-gray-600 mr-2">×</span><span class="text-gray-500">AI обучение</span></li>
                     </ul>
                     <button class="w-full py-3 rounded-lg border-2 border-purple-500 hover:bg-purple-500 transition">
                         Начать бесплатно
                     </button>
                 </div>
-
+                
                 <!-- Pro -->
                 <div class="glass-effect rounded-2xl p-8 card-hover relative border-2 border-purple-500 pulse-glow">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 gradient-bg px-6 py-1 rounded-full text-sm font-bold">
@@ -464,30 +394,12 @@
                         <p class="text-gray-400">в месяц</p>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Неограниченные игры</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>5 роботов одновременно</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Расширенная статистика</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>AI обучение (100 игр/день)</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Турниры</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Приоритетная поддержка</span>
-                        </li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Неограниченные игры</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>5 роботов одновременно</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Расширенная статистика</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>AI обучение (100 игр/день)</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Турниры</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Приоритетная поддержка</span></li>
                     </ul>
                     <button class="w-full py-3 rounded-lg gradient-bg font-bold hover:opacity-90 transition">
                         Купить Pro
@@ -502,30 +414,12 @@
                         <p class="text-gray-400">в месяц</p>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Всё из Pro +</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>50 роботов</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>AI обучение без лимитов</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Приватные турниры</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>Выделенный сервер</span>
-                        </li>
-                        <li class="flex items-center">
-                            <span class="text-green-400 mr-2">✓</span>
-                            <span>SLA 99.9%</span>
-                        </li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Всё из Pro +</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>50 роботов</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>AI обучение без лимитов</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Приватные турниры</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>Выделенный сервер</span></li>
+                        <li class="flex items-center"><span class="text-green-400 mr-2">✓</span><span>SLA 99.9%</span></li>
                     </ul>
                     <button class="w-full py-3 rounded-lg border-2 border-purple-500 hover:bg-purple-500 transition">
                         Связаться с нами
@@ -542,13 +436,10 @@
                 <h2 class="text-5xl font-orbitron font-bold mb-4">Последние новости</h2>
                 <p class="text-xl text-gray-400">Обучающие материалы и обновления</p>
             </div>
-
+            
             <div class="grid md:grid-cols-3 gap-8">
-                <!-- Blog Post 1 -->
                 <div class="glass-effect rounded-xl overflow-hidden card-hover">
-                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">
-                        🧠
-                    </div>
+                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">🧠</div>
                     <div class="p-6">
                         <div class="text-sm text-purple-400 mb-2">5 января 2026</div>
                         <h3 class="text-xl font-bold mb-3">Гайд по Self-Play обучению</h3>
@@ -556,12 +447,9 @@
                         <a href="#" class="text-purple-400 hover:text-purple-300 font-semibold">Читать далее →</a>
                     </div>
                 </div>
-
-                <!-- Blog Post 2 -->
+                
                 <div class="glass-effect rounded-xl overflow-hidden card-hover">
-                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">
-                        🎯
-                    </div>
+                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">🎯</div>
                     <div class="p-6">
                         <div class="text-sm text-purple-400 mb-2">3 января 2026</div>
                         <h3 class="text-xl font-bold mb-3">5 стратегий для новичков</h3>
@@ -569,12 +457,9 @@
                         <a href="#" class="text-purple-400 hover:text-purple-300 font-semibold">Читать далее →</a>
                     </div>
                 </div>
-
-                <!-- Blog Post 3 -->
+                
                 <div class="glass-effect rounded-xl overflow-hidden card-hover">
-                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">
-                        🏆
-                    </div>
+                    <div class="h-48 gradient-bg flex items-center justify-center text-6xl">🏆</div>
                     <div class="p-6">
                         <div class="text-sm text-purple-400 mb-2">28 декабря 2025</div>
                         <h3 class="text-xl font-bold mb-3">Итоги турнира Winter Cup 2025</h3>
@@ -583,7 +468,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <div class="text-center mt-12">
                 <button class="glass-effect px-8 py-4 rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition">
                     Все статьи →
@@ -615,7 +500,6 @@
     <footer class="bg-gray-950 py-12 border-t border-gray-800">
         <div class="container mx-auto px-6">
             <div class="grid md:grid-cols-4 gap-8">
-                <!-- Logo & Description -->
                 <div class="md:col-span-2">
                     <div class="flex items-center space-x-3 mb-4">
                         <svg width="40" height="40" viewBox="0 0 200 200" class="animate-pulse">
@@ -636,9 +520,7 @@
                         </svg>
                         <h3 class="text-xl font-orbitron font-bold">ROBOT ARENA</h3>
                     </div>
-                    <p class="text-gray-400 mb-4">
-                        Платформа для программирования и обучения AI-управляемых боевых роботов
-                    </p>
+                    <p class="text-gray-400 mb-4">Платформа для программирования и обучения AI-управляемых боевых роботов</p>
                     <div class="flex space-x-4">
                         <a href="#" class="text-gray-400 hover:text-white transition">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
@@ -651,8 +533,7 @@
                         </a>
                     </div>
                 </div>
-
-                <!-- Links -->
+                
                 <div>
                     <h4 class="font-bold mb-4">Продукт</h4>
                     <ul class="space-y-2 text-gray-400">
@@ -662,7 +543,7 @@
                         <li><a href="#blog" class="hover:text-white transition">Примеры кода</a></li>
                     </ul>
                 </div>
-
+                
                 <div>
                     <h4 class="font-bold mb-4">Сообщество</h4>
                     <ul class="space-y-2 text-gray-400">
@@ -673,7 +554,7 @@
                     </ul>
                 </div>
             </div>
-
+            
             <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
                 <p>© 2026 Robot Arena. Все права защищены.</p>
             </div>
@@ -681,7 +562,7 @@
     </footer>
 
     <script>
-        // Game Demo Animation
+        // ======== DEMO GAME ENGINE ========
         const GRID_SIZE = 10;
         let robot1 = { x: 1, y: 1, hp: 100, shield: 0 };
         let robot2 = { x: 8, y: 8, hp: 100, shield: 0 };
@@ -690,12 +571,48 @@
         let turnNumber = 1;
         let currentRobot = 1;
 
+        // Trails (history glow)
+        const trail1 = [];
+        const trail2 = [];
+        const MAX_TRAIL = 30;
+
+        // action pills & log
+        let lastAction = { 1: null, 2: null };
+        const actionLog = [];
+
+        function setLastAction(id, text) {
+            lastAction[id] = { text, expireAt: Date.now() + 1800 };
+        }
+        function addLog(id, text) {
+            actionLog.push({ id, text, turn: turnNumber });
+            if (actionLog.length > 200) actionLog.shift();
+            renderLog();
+        }
+        function renderLog() {
+            const log = document.getElementById('action-log');
+            if (!log) return;
+            const rows = actionLog.slice(-12).reverse().map(e => {
+                const dot = e.id === 1 ? 'bg-blue-500' : 'bg-red-500';
+                return `<div class="flex items-start gap-2">
+                    <span class="mt-1 inline-block w-2 h-2 rounded-full ${dot}"></span>
+                    <span class="text-gray-300">${e.text}</span>
+                    <span class="ml-auto text-xs text-gray-500">ход ${e.turn}</span>
+                </div>`;
+            }).join('');
+            log.innerHTML = rows || '<div class="text-gray-500 text-sm">Лог пуст</div>';
+        }
+
+        function pushTrail(id, x, y) {
+            const arr = id === 1 ? trail1 : trail2;
+            arr.push({ x, y });
+            if (arr.length > MAX_TRAIL) arr.shift();
+        }
+
         // Initialize grid
         function initGrid() {
             const grid = document.getElementById('game-demo');
             if (!grid) return;
             grid.innerHTML = '';
-
             for (let y = 0; y < GRID_SIZE; y++) {
                 for (let x = 0; x < GRID_SIZE; x++) {
                     const cell = document.createElement('div');
@@ -705,59 +622,83 @@
                     grid.appendChild(cell);
                 }
             }
+            pushTrail(1, robot1.x, robot1.y);
+            pushTrail(2, robot2.x, robot2.y);
         }
 
         // Render game state
         function render() {
             const cells = document.querySelectorAll('#game-demo > div');
             if (!cells.length) return;
-
+            
             cells.forEach(cell => {
                 const x = parseInt(cell.dataset.x);
                 const y = parseInt(cell.dataset.y);
-
-                // Reset cell
+                
+                // Reset
                 cell.className = 'bg-gray-800 rounded transition-all duration-300';
                 cell.innerHTML = '';
+                cell.style.boxShadow = 'none';
 
-                // Draw shots
-                const shot = shots.find(s => s.x === x && s.y === y);
-                if (shot) {
-                    cell.className = 'bg-yellow-500 rounded transition-all duration-300';
+                // Trails
+                let shadow = '';
+                const i1 = trail1.findIndex(p => p.x === x && p.y === y);
+                if (i1 !== -1) {
+                    const t = (i1 + 1) / trail1.length;
+                    const alpha = 0.30 * t + 0.05;
+                    shadow = appendShadow(shadow, `inset 0 0 14px rgba(59,130,246,${alpha}), 0 0 18px rgba(59,130,246,${alpha*0.8})`);
                 }
+                const i2 = trail2.findIndex(p => p.x === x && p.y === y);
+                if (i2 !== -1) {
+                    const t = (i2 + 1) / trail2.length;
+                    const alpha = 0.30 * t + 0.05;
+                    shadow = appendShadow(shadow, `inset 0 0 14px rgba(239,68,68,${alpha}), 0 0 18px rgba(239,68,68,${alpha*0.8})`);
+                }
+                if (shadow) cell.style.boxShadow = shadow;
 
-                // Draw traps
+                // Shots
+                const shot = shots.find(s => s.x === x && s.y === y);
+                if (shot) cell.className = 'bg-yellow-500 rounded transition-all duration-300';
+                
+                // Traps
                 const trap = traps.find(t => t.x === x && t.y === y);
                 if (trap) {
                     cell.className = 'bg-orange-500 rounded opacity-50 transition-all duration-300';
                     cell.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs">💣</div>';
                 }
-
-                // Draw robots
+                
+                // Robots
                 if (robot1.x === x && robot1.y === y) {
+                    const pill = (lastAction[1] && Date.now() < lastAction[1].expireAt)
+                        ? `<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10">R1: ${lastAction[1].text}</div>`
+                        : '';
                     cell.className = 'bg-blue-600 rounded transition-all duration-300 pulse-glow';
                     cell.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative">
+                        ${pill}
                         R1
                         ${robot1.shield > 0 ? '<span class="absolute -top-1 -right-1 text-cyan-400">🛡️</span>' : ''}
                     </div>`;
                 }
-
                 if (robot2.x === x && robot2.y === y) {
+                    const pill = (lastAction[2] && Date.now() < lastAction[2].expireAt)
+                        ? `<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10">R2: ${lastAction[2].text}</div>`
+                        : '';
                     cell.className = 'bg-red-600 rounded transition-all duration-300 pulse-glow';
                     cell.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative">
+                        ${pill}
                         R2
                         ${robot2.shield > 0 ? '<span class="absolute -top-1 -right-1 text-cyan-400">🛡️</span>' : ''}
                     </div>`;
                 }
-
+                
                 // Highlight current robot
                 if (currentRobot === 1 && robot1.x === x && robot1.y === y) {
-                    cell.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8)';
+                    cell.style.boxShadow = appendShadow(cell.style.boxShadow, '0 0 20px rgba(59,130,246,0.8)');
                 } else if (currentRobot === 2 && robot2.x === x && robot2.y === y) {
-                    cell.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.8)';
+                    cell.style.boxShadow = appendShadow(cell.style.boxShadow, '0 0 20px rgba(239,68,68,0.8)');
                 }
             });
-
+            
             // Update UI
             const r1 = document.getElementById('robot1-hp');
             const r2 = document.getElementById('robot2-hp');
@@ -767,138 +708,127 @@
             if (tn) tn.textContent = turnNumber;
         }
 
+        function appendShadow(existing, extra) {
+            if (!existing || existing === 'none') return extra;
+            return existing + ', ' + extra;
+        }
+
+        // Helpers
+        function dirName(dx, dy) {
+            if (dx === 1 && dy === 0) return 'вправо';
+            if (dx === -1 && dy === 0) return 'влево';
+            if (dx === 0 && dy === -1) return 'вверх';
+            if (dx === 0 && dy === 1) return 'вниз';
+            if (dx === 1 && dy === 1) return 'вправо-вниз';
+            if (dx === 1 && dy === -1) return 'вправо-вверх';
+            if (dx === -1 && dy === 1) return 'влево-вниз';
+            if (dx === -1 && dy === -1) return 'влево-вверх';
+            return 'стоит на месте';
+        }
+        const to1 = n => n + 1;
+        const coord = (x, y) => `(${to1(x)}, ${to1(y)})`;
+
         // AI logic
         function makeMove() {
-            const current = currentRobot === 1 ? robot1 : robot2;
-            const enemy = currentRobot === 1 ? robot2 : robot1;
-
+            const id = currentRobot;
+            const current = id === 1 ? robot1 : robot2;
+            const enemy = id === 1 ? robot2 : robot1;
+            
             const dx = enemy.x - current.x;
             const dy = enemy.y - current.y;
             const distance = Math.max(Math.abs(dx), Math.abs(dy));
-
-            // Random action
-            const action = Math.random();
-
-            if (action < 0.4 && distance <= 5) {
-                // Shoot
-                shoot(current, enemy);
-            } else if (action < 0.6) {
-                // Move towards enemy
-                moveTowards(current, enemy);
-            } else if (action < 0.75) {
-                // Place trap
-                placeTrap(current);
-            } else if (action < 0.85 && current.shield === 0 && current.hp < 60) {
-                // Activate shield
+            
+            const rnd = Math.random();
+            let note = '';
+            
+            if (rnd < 0.4 && distance <= 5) {
+                note = shoot(current, enemy);
+            } else if (rnd < 0.6) {
+                note = moveTowards(id, current, enemy);
+            } else if (rnd < 0.75) {
+                note = placeTrap(current);
+            } else if (rnd < 0.85 && current.shield === 0 && current.hp < 60) {
                 current.shield = 2;
+                note = 'активировал щит';
             } else {
-                // Random move
-                randomMove(current);
+                note = randomMove(id, current);
             }
-
-            // Decrease shield
+            
             if (current.shield > 0) current.shield--;
-
-            // Switch turn
             currentRobot = currentRobot === 1 ? 2 : 1;
             if (currentRobot === 1) turnNumber++;
-
+            
+            if (note) { setLastAction(id, note); addLog(id, note); }
             render();
         }
-
+        
         function shoot(shooter, target) {
             shots = [];
-
+            let hit = false;
+            let brokeShield = false;
             const dx = Math.sign(target.x - shooter.x);
             const dy = Math.sign(target.y - shooter.y);
-
-            // Trace shot path
             let x = shooter.x + dx;
             let y = shooter.y + dy;
-
             while (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
                 shots.push({ x, y });
-
                 if (x === target.x && y === target.y) {
-                    // Hit!
-                    if (target.shield > 0) {
-                        target.shield = 0;
-                    } else {
-                        target.hp = Math.max(0, target.hp - 20);
-                    }
+                    if (target.shield > 0) { target.shield = 0; brokeShield = true; }
+                    else { target.hp = Math.max(0, target.hp - 20); hit = true; }
                     break;
                 }
-
-                x += dx;
-                y += dy;
+                x += dx; y += dy;
             }
-
-            // Clear shots after animation
-            setTimeout(() => {
-                shots = [];
-                render();
-            }, 500);
+            setTimeout(() => { shots = []; render(); }, 500);
+            const dirText = dirName(Math.sign(dx), Math.sign(dy));
+            if (brokeShield) return `выстрел ${dirText} — щит противника разрушен`;
+            if (hit) return `выстрел ${dirText} — попадание (-20 HP)`;
+            return `выстрел ${dirText} — промах`;
         }
-
-        function moveTowards(robot, target) {
+        
+        function moveTowards(id, robot, target) {
             const dx = Math.sign(target.x - robot.x);
             const dy = Math.sign(target.y - robot.y);
-
-            // Try to move
-            const newX = robot.x + (Math.abs(dx) > Math.abs(dy) ? dx : 0);
-            const newY = robot.y + (Math.abs(dx) <= Math.abs(dy) ? dy : 0);
-
-            // Check bounds and collision
-            if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
-                const other = robot === robot1 ? robot2 : robot1;
-                if (newX !== other.x || newY !== other.y) {
-                    robot.x = newX;
-                    robot.y = newY;
-
-                    // Check trap
-                    const trapIndex = traps.findIndex(t => t.x === newX && t.y === newY && t.owner !== robot);
-                    if (trapIndex !== -1) {
-                        robot.hp = Math.max(0, robot.hp - 15);
-                        traps.splice(trapIndex, 1);
-                    }
-                }
-            }
+            const useX = Math.abs(dx) > Math.abs(dy);
+            return moveRobot(id, robot, useX ? dx : 0, useX ? 0 : dy, 'шаг');
         }
-
-        function randomMove(robot) {
-            const directions = [
-                { dx: 0, dy: -1 },
-                { dx: 0, dy: 1 },
-                { dx: -1, dy: 0 },
-                { dx: 1, dy: 0 }
-            ];
-
+        function randomMove(id, robot) {
+            const directions = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
             const dir = directions[Math.floor(Math.random() * directions.length)];
-            const newX = robot.x + dir.dx;
-            const newY = robot.y + dir.dy;
-
+            return moveRobot(id, robot, dir.dx, dir.dy, 'случайный шаг');
+        }
+        function moveRobot(id, robot, dx, dy, label) {
+            const from = { x: robot.x, y: robot.y };
+            const newX = robot.x + dx;
+            const newY = robot.y + dy;
+            let moved = false, trapHit = false;
             if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
                 const other = robot === robot1 ? robot2 : robot1;
                 if (newX !== other.x || newY !== other.y) {
-                    robot.x = newX;
-                    robot.y = newY;
-
-                    // Check trap
+                    robot.x = newX; robot.y = newY; moved = true;
+                    pushTrail(id, robot.x, robot.y);
                     const trapIndex = traps.findIndex(t => t.x === newX && t.y === newY && t.owner !== robot);
                     if (trapIndex !== -1) {
                         robot.hp = Math.max(0, robot.hp - 15);
-                        traps.splice(trapIndex, 1);
+                        traps.splice(trapIndex, 1); trapHit = true;
                     }
                 }
             }
+            if (moved) {
+                const dirT = dirName(Math.sign(robot.x - from.x), Math.sign(robot.y - from.y));
+                return `${label} ${dirT} ${coord(from.x, from.y)} → ${coord(robot.x, robot.y)}${trapHit ? ' — наступил на ловушку (-15 HP)' : ''}`;
+            }
+            return `${label} — без движения`;
         }
-
+        
         function placeTrap(robot) {
             if (traps.length < 5 && !traps.find(t => t.x === robot.x && t.y === robot.y)) {
                 traps.push({ x: robot.x, y: robot.y, owner: robot });
+                return `установил ловушку в ${coord(robot.x, robot.y)}`;
             }
+            return 'пытался поставить ловушку, но здесь уже есть';
         }
-
+        
         function resetGame() {
             robot1 = { x: 1, y: 1, hp: 100, shield: 0 };
             robot2 = { x: 8, y: 8, hp: 100, shield: 0 };
@@ -906,23 +836,28 @@
             shots = [];
             turnNumber = 1;
             currentRobot = 1;
+            trail1.length = 0; trail2.length = 0;
+            pushTrail(1, robot1.x, robot1.y); pushTrail(2, robot2.x, robot2.y);
+            lastAction = {1:null,2:null};
+            actionLog.length = 0;
+            renderLog();
             render();
         }
-
+        
         // Start game animation
         initGrid();
         render();
-
+        renderLog();
+        
         // Game loop
         setInterval(() => {
             if (robot1.hp > 0 && robot2.hp > 0) {
                 makeMove();
             } else {
-                // Game over, reset after delay
                 setTimeout(resetGame, 3000);
             }
         }, 1000);
-
+        
         // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -933,7 +868,7 @@
                 }
             });
         });
-
+        
         // Navbar background on scroll
         window.addEventListener('scroll', () => {
             const nav = document.querySelector('nav');
