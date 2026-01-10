@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Robot Arena — Симуляция (лог справа, правила внизу)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glass-effect { background: rgba(255,255,255,.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.1); }
+    .grid-pattern { background-image: linear-gradient(rgba(102,126,234,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(102,126,234,.1) 1px, transparent 1px); background-size: 50px 50px; }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    @keyframes pulse-glow { 0%,100%{ box-shadow: 0 0 20px rgba(102,126,234,.5);} 50%{ box-shadow: 0 0 40px rgba(102,126,234,.8);} }
+    .pill{ animation: pill-fade 1.8s ease-out forwards; }
+    @keyframes pill-fade{ 0%{ opacity:0; transform: translate(-50%,-6px) scale(.95); } 10%{ opacity:1; transform: translate(-50%,-8px) scale(1);} 85%{ opacity:1; transform: translate(-50%,-10px) scale(1);} 100%{ opacity:0; transform: translate(-50%,-12px) scale(.98);} }
+  
+    .hit-anim { animation: hit-flash 1.5s ease-in-out; }
+    @keyframes hit-flash {
+      0%   { filter: drop-shadow(0 0 0 rgba(239,68,68,0));   }
+      50%  { filter: drop-shadow(0 0 18px rgba(239,68,68,0.95)); }
+      100% { filter: drop-shadow(0 0 0 rgba(239,68,68,0));   }
+    }
+    
+    /* stronger on-hit pulse + slight shake */
+    .hit-pulse { animation: hitPulse 1.5s ease-in-out; }
+    @keyframes hitPulse {
+      0%   { box-shadow: 0 0 0 rgba(239,68,68,0); }
+      35%  { box-shadow: 0 0 24px rgba(239,68,68,0.9); }
+      70%  { box-shadow: 0 0 12px rgba(239,68,68,0.4); }
+      100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
+    }
+    .shake { animation: shake 0.35s ease-in-out 0s 3; }
+    @keyframes shake {
+      0%,100% { transform: translate(0,0); }
+      20% { transform: translate(-1.5px, 0); }
+      40% { transform: translate(1.5px, 0); }
+      60% { transform: translate(-1.5px, 0); }
+      80% { transform: translate(1.5px, 0); }
+    }
+    
+    .fade-in { animation: fadeIn 0.2s ease-out forwards; }
+    .fade-out { animation: fadeOut 0.2s ease-in forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translate(-50%,-55%); } to { opacity: 1; transform: translate(-50%,-50%);} }
+    @keyframes fadeOut { from { opacity: 1; transform: translate(-50%,-50%);} to { opacity: 0; transform: translate(-50%,-45%);} }
+    
+    /* Shooter FX: saturate the robot and show a pulsating frame */
+    .shooter-saturate { filter: saturate(2) brightness(1.2) contrast(1.05); }
+    .shooter-ring-blue { border: 4px solid rgba(59,130,246,0.98); box-shadow: 0 0 24px rgba(59,130,246,0.95), 0 0 40px rgba(59,130,246,0.55); animation: ringPulseBlue 0.8s ease-in-out infinite; border-radius: 0.5rem; }
+    .shooter-ring-red  { border: 4px solid rgba(239,68,68,0.98); box-shadow: 0 0 24px rgba(239,68,68,0.95), 0 0 40px rgba(239,68,68,0.55); animation: ringPulseRed  0.8s ease-in-out infinite; border-radius: 0.5rem; }
+    @keyframes ringPulseBlue {
+      0%   { transform: scale(1);     box-shadow: 0 0 18px rgba(59,130,246,0.85), 0 0 26px rgba(59,130,246,0.35); }
+      50%  { transform: scale(1.08);  box-shadow: 0 0 34px rgba(59,130,246,1),   0 0 60px rgba(59,130,246,0.6);  }
+      100% { transform: scale(1);     box-shadow: 0 0 18px rgba(59,130,246,0.85), 0 0 26px rgba(59,130,246,0.35); }
+    }
+      50%  { transform: scale(1.05);  box-shadow: 0 0 26px rgba(59,130,246,1);    }
+      100% { transform: scale(1);     box-shadow: 0 0 12px rgba(59,130,246,0.75); }
+    }
+    @keyframes ringPulseRed {
+      0%   { transform: scale(1);     box-shadow: 0 0 18px rgba(239,68,68,0.85), 0 0 26px rgba(239,68,68,0.35); }
+      50%  { transform: scale(1.08);  box-shadow: 0 0 34px rgba(239,68,68,1),   0 0 60px rgba(239,68,68,0.6);  }
+      100% { transform: scale(1);     box-shadow: 0 0 18px rgba(239,68,68,0.85), 0 0 26px rgba(239,68,68,0.35); }
+    }
+      50%  { transform: scale(1.05);  box-shadow: 0 0 26px rgba(239,68,68,1);    }
+      100% { transform: scale(1);     box-shadow: 0 0 12px rgba(239,68,68,0.75); }
+    }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+<!-- Hero (оставляем заголовок раздела) -->
+<section class="pt-10 pb-6 grid-pattern relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 pointer-events-none"></div>
+<div class="container mx-auto px-6 relative z-10">
+<h1 class="text-4xl md:text-5xl font-orbitron font-extrabold text-center">Симуляция боя</h1>
+</div>
+</section>
+<!-- Arena + Log side-by-side -->
+<section class="py-6 bg-gray-800">
+<div class="container mx-auto px-6">
+<div class="grid md:grid-cols-3 gap-6 items-start">
+<!-- Arena (2/3) -->
+<div class="md:col-span-1 md:sticky md:top-8 self-start">
+<div class="aspect-square w-full mx-auto bg-gray-900 rounded-2xl border-2 border-purple-500 p-6 shadow-2xl relative">
+<div class="hidden absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[30%] rounded-2xl glass-effect border border-white/20 shadow-2xl flex items-center justify-center text-center" id="win-overlay">
+<div class="text-2xl md:text-3xl font-orbitron font-extrabold" id="win-text"></div>
+<div class="mt-2 text-sm md:text-base text-gray-300" id="win-meta"></div>
+</div>
+<div class="grid grid-cols-10 gap-1 h-full" id="game-demo"></div>
+</div>
+<!-- Stats under arena -->
+<div class="mt-4 glass-effect rounded-lg p-4">
+<div class="text-center text-sm text-gray-400 mb-2">Симуляция боя в реальном времени</div>
+<div class="flex justify-around text-xs">
+<div class="flex items-center gap-2"><span class="inline-block w-3 h-3 bg-blue-500 rounded"></span><span class="text-blue-400">Робот-1: <span id="robot1-hp">100</span> HP</span></div>
+<div class="flex items-center gap-2"><span class="inline-block w-3 h-3 bg-red-500 rounded"></span><span class="text-red-400">Робот-2: <span id="robot2-hp">100</span> HP</span></div>
+</div>
+<div class="mt-2 text-xs text-purple-400 text-center">Ход: <span id="turn-number">1</span></div>
+<div class="mt-4">
+<label class="block text-xs text-gray-400 mb-1">Скорость симуляции: <span id="speed-label">1.0 с/ход</span></label>
+<input class="w-full accent-purple-500" id="speed-slider" max="3" min="1" step="0.25" type="range" value="1"/>
+</div>
+</div>
+</div>
+<!-- Action Log (1/3) -->
+<aside class="md:col-span-2 md:sticky md:top-6 self-start w-full">
+<div class="glass-effect rounded-xl p-4 border border-white/10">
+<div class="text-sm font-semibold text-gray-300 mb-2">Лог действий</div>
+<div class="bg-gray-900/60 border border-white/10 rounded-lg p-3 max-h-[680px] overflow-auto space-y-1 text-sm" id="action-log">
+<!-- rows -->
+</div>
+</div>
+</aside>
+</div>
+</div></section>
+<script>
+    // ====== Game Demo code with trails + action log (same behavior) ======
+    const GRID_SIZE = 10;
+    let robot1 = { x: 1, y: 1, hp: 100, shield: 0 };
+    let robot2 = { x: 8, y: 8, hp: 100, shield: 0 };
+    let traps = [];
+    let shots = [];
+    let turnNumber = 1;
+
+// Параметры скорости симуляции (секунд на ход)
+let moveDelaySec = 1.0;
+let gameTimer = null;
+
+function scheduleNextTick(){
+  if (gameTimer) clearTimeout(gameTimer);
+  gameTimer = setTimeout(() => {
+    if (robot1.hp > 0 && robot2.hp > 0) {
+      makeMove();
+      scheduleNextTick();
+    } else {
+      const winnerId = (robot1.hp <= 0 && robot2.hp > 0) ? 2 : 1;
+      showWinner(winnerId);
+      setTimeout(() => { resetGame(); scheduleNextTick(); }, 3000);
+    }
+  }, moveDelaySec * 1000);
+}
+// --- Winner banner (2s) ---
+function showWinner(winnerId){
+  const overlay = document.getElementById('win-overlay');
+  const textEl = document.getElementById('win-text');
+  const metaEl = document.getElementById('win-meta');
+  if (!overlay || !textEl) return;
+  const isR1 = winnerId === 1;
+  textEl.textContent = isR1 ? 'Победил робот R1 🏆' : 'Победил робот R2 🏆';
+  textEl.classList.remove('text-blue-300','text-red-300');
+  textEl.classList.add(isR1 ? 'text-blue-300' : 'text-red-300');
+  overlay.classList.remove('hidden','fade-out');
+  if (metaEl) { const turn = turnNumber; const r1hp = robot1.hp; const r2hp = robot2.hp; metaEl.textContent = `Ход ${turn} • R1: ${r1hp} HP • R2: ${r2hp} HP`; }
+  overlay.classList.add('fade-in');
+  setTimeout(() => {
+    overlay.classList.remove('fade-in');
+    overlay.classList.add('fade-out');
+    setTimeout(() => { overlay.classList.add('hidden'); }, 200);
+  }, 2000);
+}
+
+
+function setupSpeedControls(){
+  const slider = document.getElementById('speed-slider');
+  const label = document.getElementById('speed-label');
+  if (!slider || !label) return;
+  const fmt = (v)=> (Math.round(v*100)/100).toString().replace(/\.00$/, '');
+  label.textContent = fmt(slider.value) + ' с/ход';
+  slider.addEventListener('input', (e)=>{
+    moveDelaySec = parseFloat(e.target.value);
+    label.textContent = fmt(moveDelaySec) + ' с/ход';
+    scheduleNextTick();
+  });
+}
+
+    let currentRobot = 1;
+
+// --- Scan overlay (Chebyshev) ---
+const SCAN_RADIUS = 2;
+let scanOverlay = []; // items: {x,y,expiresAt,by}
+const SCAN_PROB = 0.30;
+let shootFxUntil = { 1: 0, 2: 0 };
+// --- Energy system ---
+const ENERGY = { move: 1, shoot: 3, scan: 2, shield: 4, trap: 3 };
+const ENERGY_REGEN = 3;
+let energy = { 1: 6, 2: 6 };
+function spendEnergy(id, cost){ if (energy[id] >= cost){ energy[id]-=cost; return true;} return false; }
+
+
+// --- Random spawn helpers ---
+function randInt(n){ return Math.floor(Math.random() * n); }
+function chebyshev(a,b){ return Math.max(Math.abs(a.x-b.x), Math.abs(a.y-b.y)); }
+/**
+ * Puts robots on random distinct cells with minimal Chebyshev separation.
+ * Adjust minSep if you want them farther/closer.
+ */
+function spawnRobotsRandomly(minSep = 4){
+  // Ensure objects exist
+  if (!robot1) robot1 = { x: 0, y: 0, hp: 100, shield: 0 };
+  if (!robot2) robot2 = { x: 0, y: 0, hp: 100, shield: 0 };
+  let p1 = { x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) };
+  let p2 = { x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) };
+  let guard = 0;
+  while ((p2.x === p1.x && p2.y === p1.y) || chebyshev(p1, p2) < minSep){
+    p2 = { x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) };
+    if (++guard > 1000) break; // fallback if grid too small
+  }
+  robot1.x = p1.x; robot1.y = p1.y;
+  robot2.x = p2.x; robot2.y = p2.y;
+}
+
+
+    const trail1 = []; const trail2 = []; const MAX_TRAIL = 30;
+    let lastAction = { 1: null, 2: null };
+    // randomized scanning; counter removed
+    // До какого времени показывать анимацию попадания
+    let hitUntil = { 1: 0, 2: 0 };
+    const actionLog = [];
+
+    const to1 = n => n + 1;
+    const coord = (x, y) => `(${to1(x)}, ${to1(y)})`;
+
+    function setLastAction(id, text){ lastAction[id] = { text, expireAt: Date.now() + 1800 }; }
+    
+
+
+function addLog(id, text, turn){
+  actionLog.push({ id, text, turn });
+  if (actionLog.length > 200) actionLog.shift();
+  renderLog();
+}
+
+function renderLog(){
+      const log = document.getElementById('action-log'); if(!log) return;
+      const items = actionLog.slice(-50).reverse(); // newest first
+      let lastTurn = null;
+      const parts = [];
+      for (const e of items) {
+        if (lastTurn !== null && e.turn !== lastTurn) {
+          parts.push('<div class="border-t border-white/20 my-2"></div>');
+        }
+        lastTurn = e.turn;
+        const dot = e.id === 1 ? 'bg-blue-500' : 'bg-red-500';
+        parts.push(`<div class="flex items-start gap-2">
+            <span class="mt-1 inline-block w-2 h-2 rounded-full ${dot}"></span>
+            <span class="text-gray-300">${e.text}</span>
+            <span class="ml-auto text-xs text-gray-500">ход ${e.turn}</span>
+          </div>`);
+      }
+      log.innerHTML = parts.join('') || '<div class="text-gray-500 text-sm">Лог пуст</div>';
+    }
+    function pushTrail(id,x,y){ const arr = id===1?trail1:trail2; arr.push({x,y}); if(arr.length>MAX_TRAIL) arr.shift(); }
+
+    function initGrid(){
+      const grid = document.getElementById('game-demo'); grid.innerHTML='';
+      for(let y=0;y<GRID_SIZE;y++){ for(let x=0;x<GRID_SIZE;x++){ const cell=document.createElement('div'); cell.className='bg-gray-800 rounded transition-all duration-300'; cell.dataset.x=x; cell.dataset.y=y; grid.appendChild(cell);}}
+      pushTrail(1, robot1.x, robot1.y); pushTrail(2, robot2.x, robot2.y);
+    }
+
+    function appendShadow(existing, extra){ if(!existing||existing==='none') return extra; return existing+', '+extra; }
+
+    function render(){
+      const cells = document.querySelectorAll('#game-demo > div');
+      cells.forEach(cell => {
+        const x = +cell.dataset.x, y = +cell.dataset.y;
+        cell.className='bg-gray-800 rounded transition-all duration-300'; cell.innerHTML=''; cell.style.boxShadow='none'; cell.style.backgroundColor=''; cell.style.backgroundImage='none'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.filter=''; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.backgroundImage='none'; cell.style.backgroundBlendMode=''; cell.style.backgroundColor=''; cell.style.outline='none';
+        let shadow='';
+        const i1 = trail1.findIndex(p=>p.x===x && p.y===y);
+        if(i1!==-1){ const t=(i1+1)/trail1.length, a=0.30*t+0.05; shadow=appendShadow(shadow,`inset 0 0 14px rgba(59,130,246,${a}), 0 0 18px rgba(59,130,246,${a*.8})`); }
+        const i2 = trail2.findIndex(p=>p.x===x && p.y===y);
+        if(i2!==-1){ const t=(i2+1)/trail2.length, a=0.30*t+0.05; shadow=appendShadow(shadow,`inset 0 0 14px rgba(239,68,68,${a}), 0 0 18px rgba(239,68,68,${a*.8})`); }
+        if(shadow) cell.style.boxShadow=shadow;
+
+        const isScanned = scanOverlay.some(s => s.x===x && s.y===y && Date.now() < s.expiresAt);
+if (isScanned) {
+  cell.style.backgroundColor = 'rgba(134,239,172,0.28)';
+  cell.style.outline = '2px solid rgba(74,222,128,0.95)';
+  cell.style.outlineOffset = '-2px';
+  shadow = appendShadow(shadow, '0 0 10px rgba(134,239,172,0.35)');
+}
+if (shadow) cell.style.boxShadow = shadow;
+var scanEntry = null;
+for (let k = scanOverlay.length - 1; k >= 0; k--) {
+  const s = scanOverlay[k];
+  if (s.x===x && s.y===y && Date.now() < s.expiresAt) { scanEntry = s; break; }
+}
+if (scanEntry) {
+  const isBlue = scanEntry.by === 1;
+  cell.style.outline = isBlue ? '2px solid rgba(59,130,246,0.98)' : '2px solid rgba(239,68,68,0.98)';
+  cell.style.outlineOffset = '-2px';
+  shadow = appendShadow(shadow, isBlue ? '0 0 10px rgba(59,130,246,0.55)' : '0 0 10px rgba(239,68,68,0.55)');
+}
+if (shadow) cell.style.boxShadow = shadow;
+var scanEntry = null;
+for (let k = scanOverlay.length - 1; k >= 0; k--) {
+  const s = scanOverlay[k];
+  if (s.x===x && s.y===y && Date.now() < s.expiresAt) { scanEntry = s; break; }
+}
+if (scanEntry) {
+  const isBlue = scanEntry.by === 1;
+  // light translucent fill + colored outline
+  cell.style.backgroundColor = isBlue ? 'rgba(59,130,246,0.12)' : 'rgba(239,68,68,0.12)';
+  cell.style.outline = isBlue ? '2px solid rgba(59,130,246,0.98)' : '2px solid rgba(239,68,68,0.98)';
+  cell.style.outlineOffset = '-2px';
+  shadow = appendShadow(shadow, isBlue ? '0 0 10px rgba(59,130,246,0.55)' : '0 0 10px rgba(239,68,68,0.55)');
+}
+if (shadow) cell.style.boxShadow = shadow;
+const shot = shots.find(s=>s.x===x && s.y===y); if(shot) cell.className='bg-yellow-500 rounded transition-all duration-300';
+        const trap = traps.find(t=>t.x===x && t.y===y); if(trap){ cell.className='bg-orange-500 rounded opacity-50 transition-all duration-300'; cell.innerHTML='<div class="w-full h-full flex items-center justify-center text-xs">💣</div>'; }
+
+        if(robot1.x===x && robot1.y===y){
+          const pill=(lastAction[1] && Date.now()<lastAction[1].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[1]?.kind==='damage'?'text-red-400':''}">R1: ${lastAction[1].text}</div>`:'';
+          const isHit = Date.now() < hitUntil[1];
+          cell.className='bg-blue-600 rounded transition-all duration-300 pulse-glow';
+          cell.innerHTML=`<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative ${isHit ? 'hit-pulse shake' : ''}">
+            ${pill}
+            R1
+            ${robot1.shield>0?'<span class="absolute -top-1 -right-1 text-cyan-400">🛡️</span>':''}
+          </div>`;
+        }
+        if(robot2.x===x && robot2.y===y){
+          const pill=(lastAction[2] && Date.now()<lastAction[2].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[2]?.kind==='damage'?'text-red-400':''}">R2: ${lastAction[2].text}</div>`:'';
+          const isHit = Date.now() < hitUntil[2];
+          cell.className='bg-red-600 rounded transition-all duration-300 pulse-glow';
+          cell.innerHTML=`<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative ${isHit ? 'hit-pulse shake' : ''}">
+            ${pill}
+            R2
+            ${robot2.shield>0?'<span class="absolute -top-1 -right-1 text-cyan-400">🛡️</span>':''}
+          </div>`;
+        }
+
+        if(currentRobot===1 && robot1.x===x && robot1.y===y){ cell.style.boxShadow=appendShadow(cell.style.boxShadow,'0 0 20px rgba(59,130,246,0.8)'); }
+        else if(currentRobot===2 && robot2.x===x && robot2.y===y){ cell.style.boxShadow=appendShadow(cell.style.boxShadow,'0 0 20px rgba(239,68,68,0.8)'); }
+      });
+      const r1=document.getElementById('robot1-hp'), r2=document.getElementById('robot2-hp'), tn=document.getElementById('turn-number');
+      if(r1) r1.textContent=robot1.hp; if(r2) r2.textContent=robot2.hp; if(tn) tn.textContent=turnNumber; const e1=document.getElementById('robot1-energy'); if(e1) e1.textContent=energy[1]; const e2=document.getElementById('robot2-energy'); if(e2) e2.textContent=energy[2];
+    }
+
+    function dirName(dx,dy){ if(dx===1&&dy===0)return'вправо'; if(dx===-1&&dy===0)return'влево'; if(dx===0&&dy===-1)return'вверх'; if(dx===0&&dy===1)return'вниз'; if(dx===1&&dy===1)return'вправо-вниз'; if(dx===1&&dy===-1)return'вправо-вверх'; if(dx===-1&&dy===1)return'влево-вниз'; if(dx===-1&&dy===-1)return'влево-вверх'; return'стоит на месте'; }
+    // Chebyshev distance
+    function cheb(a,b){ return Math.max(Math.abs(a.x-b.x), Math.abs(a.y-b.y)); }
+
+    // Apply scan: mark cells within radius for 1s and report detections
+    function scanArea(id, me, radius = SCAN_RADIUS){
+      const now = Date.now();
+      scanOverlay = scanOverlay.filter(s => now < s.expiresAt);
+      for(let y=0;y<GRID_SIZE;y++){
+        for(let x=0;x<GRID_SIZE;x++){
+          if (Math.max(Math.abs(x - me.x), Math.abs(y - me.y)) <= radius){
+            scanOverlay.push({ x, y, expiresAt: now + 1500, by: id });
+          }
+        }
+      }
+      const enemy = (id===1) ? robot2 : robot1;
+      const sawEnemy = Math.max(Math.abs(enemy.x - me.x), Math.abs(enemy.y - me.y)) <= radius;
+      const trapsCount = traps.filter(t => Math.max(Math.abs(t.x - me.x), Math.abs(t.y - me.y)) <= radius).length;
+      return `сканирование r=${radius}: ${sawEnemy?`враг обнаружен`:`врага нет`}, ловушек: ${trapsCount}`;
+    }
+
+
+    
+
+
+
+
+
+function makeMove(){
+  const turnAtStart = turnNumber;
+
+  // Спрятать плашку у ожидающего робота (кроме активной плашки урона)
+  const waitingId = currentRobot === 1 ? 2 : 1;
+  if (!(lastAction[waitingId] && lastAction[waitingId].kind === 'damage' && Date.now() < lastAction[waitingId].expireAt)) {
+    lastAction[waitingId] = null;
+  }
+
+  const id = currentRobot;
+  const me = (id === 1) ? robot1 : robot2;
+  const enemy = (id === 1) ? robot2 : robot1;
+
+  // Энергия: восстановление в начале хода
+  energy[id] = Math.max(0, energy[id] + ENERGY_REGEN);
+
+  const dx = enemy.x - me.x;
+  const dy = enemy.y - me.y;
+  const distance = Math.max(Math.abs(dx), Math.abs(dy));
+
+  let note = '';
+
+  // Вероятность сканирования
+  if (Math.random() < SCAN_PROB && spendEnergy(id, ENERGY.scan)) {
+    note = scanArea(id, me, SCAN_RADIUS);
+  } else {
+    const rnd = Math.random();
+    if (rnd < 0.35 && distance <= 5 && spendEnergy(id, ENERGY.shoot))      { note = shoot(me, enemy); }
+    else if (rnd < 0.55 && spendEnergy(id, ENERGY.move))                    { note = moveTowards(id, me, enemy); }
+    else if (rnd < 0.75 && spendEnergy(id, ENERGY.trap))                    { note = placeTrap(me); }
+    else if (rnd < 0.90 && me.shield === 0 && me.hp < 60 && spendEnergy(id, ENERGY.shield)) { me.shield = 2; note = 'активировал щит'; }
+    else if (spendEnergy(id, ENERGY.move))                                  { note = randomMove(id, me); }
+    else { note = 'пропустил ход (нет энергии)'; }
+  }
+
+  if (me.shield > 0) me.shield--;
+
+  currentRobot = (currentRobot === 1) ? 2 : 1;
+  if (currentRobot === 1) turnNumber++;
+
+  if (note) {
+    setLastAction(id, note);
+    if (typeof addLog === 'function') addLog(id, `${note} [энергия: ${energy[id]}]`, turnAtStart);
+  }
+  render();
+}
+
+function shoot(shooter, target){
+  shots = [];
+  // Build path from shooter towards target (8 directions)
+  const dx = Math.sign(target.x - shooter.x), dy = Math.sign(target.y - shooter.y);
+  let x = shooter.x + dx, y = shooter.y + dy;
+  const path = [];
+  let willHit = false, brokeShield = false;
+  const preShield = target.shield;
+  while (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+    path.push({x,y});
+    if (x === target.x && y === target.y) { willHit = true; break; }
+    x += dx; y += dy;
+  }
+  // Shooter FX window (saturate + ring)
+  const shooterId = (shooter === robot1) ? 1 : 2;
+  shootFxUntil[shooterId] = Date.now() + 800;
+
+  // Animate beam along path
+  let i = 0;
+  const step = () => {
+    shots = path.slice(0, i+1);
+    render();
+    i++;
+    if (i < path.length) {
+      setTimeout(step, 45);
+    } else {
+      // Apply hit effects at the end
+      if (willHit) {
+        if (preShield > 0) { target.shield = 0; brokeShield = true; }
+        else { target.hp = Math.max(0, target.hp - 20); }
+        // Target hit pulse + damage pill
+        const targetId = (shooter === robot1) ? 2 : 1;
+        hitUntil[targetId] = Date.now() + 1500;
+        const dmgText = brokeShield ? 'щит разрушен' : '−20 HP';
+        lastAction[targetId] = { text: dmgText, expireAt: Date.now() + 1500, kind: 'damage' };
+      }
+      setTimeout(() => { shots = []; render(); }, 220);
+    }
+  };
+  step();
+
+  const dirText = dirName(Math.sign(dx), Math.sign(dy));
+  if (preShield > 0 && willHit) return `выстрел ${dirText} — щит противника разрушен`;
+  if (willHit) return `выстрел ${dirText} — попадание (-20 HP)`;
+  return `выстрел ${dirText} — промах`;
+}
+
+    function moveTowards(id,me,target){ const dx=Math.sign(target.x-me.x), dy=Math.sign(target.y-me.y); const useX=Math.abs(dx)>Math.abs(dy); return moveRobot(id,me,useX?dx:0,useX?0:dy,'шаг'); }
+    function randomMove(id,me){ const dirs=[{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}]; const d=dirs[Math.floor(Math.random()*dirs.length)]; return moveRobot(id,me,d.dx,d.dy,'случайный шаг'); }
+    function moveRobot(id,me,dx,dy,label){
+      const from={x:me.x,y:me.y}; const newX=me.x+dx, newY=me.y+dy; let moved=false, trapHit=false;
+      if(newX>=0&&newX<GRID_SIZE&&newY>=0&&newY<GRID_SIZE){ const other=me===robot1?robot2:robot1; if(newX!==other.x||newY!==other.y){ me.x=newX; me.y=newY; moved=true; pushTrail(id,me.x,me.y); const ti=traps.findIndex(t=>t.x===newX&&t.y===newY&&t.owner!==me); if(ti!==-1){ me.hp=Math.max(0,me.hp-15); traps.splice(ti,1); trapHit=true; } } }
+      if(moved){ const dirT=dirName(Math.sign(me.x-from.x),Math.sign(me.y-from.y)); return `${label} ${dirT} ${coord(from.x,from.y)} → ${coord(me.x,me.y)}${trapHit?' — наступил на ловушку (-15 HP)':''}`; }
+      return `${label} — без движения`;
+    }
+    function placeTrap(me){ if(traps.length<5 && !traps.find(t=>t.x===me.x&&t.y===me.y)){ traps.push({x:me.x,y:me.y,owner:me}); return `установил ловушку в ${coord(me.x,me.y)}`; } return 'пытался поставить ловушку, но здесь уже есть'; }
+
+    
+
+function resetGame(){
+  // Reset state
+  robot1 = { x: 0, y: 0, hp: 100, shield: 0 };
+  robot2 = { x: 0, y: 0, hp: 100, shield: 0 };
+  traps = [];
+  shots = [];
+  turnNumber = 1;
+  currentRobot = 1;
+
+  // Clear visuals/meta
+  trail1.length = 0;
+  trail2.length = 0;
+  lastAction = { 1: null, 2: null };
+  actionLog.length = 0;
+  renderLog();
+  if (typeof hitUntil !== 'undefined') { hitUntil = { 1: 0, 2: 0 }; }
+
+  // Random spawn and seed trails
+  spawnRobotsRandomly();
+  pushTrail(1, robot1.x, robot1.y);
+  pushTrail(2, robot2.x, robot2.y);
+
+  render();
+
+}
+spawnRobotsRandomly();
+pushTrail(1, robot1.x, robot1.y);
+pushTrail(2, robot2.x, robot2.y);
+initGrid(); render(); renderLog();
+setupSpeedControls();
+scheduleNextTick();
+</script>
+</body>
+</html>
