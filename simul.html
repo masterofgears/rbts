@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="ru">
@@ -5,7 +6,13 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Robot Arena — Симуляция (лог справа, правила внизу)</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+  /* TURN_ENERGY_PREINIT */
+  var TURN_ENERGY = 20;
+  var turnFresh = { 1: true, 2: true };
+
+  window.addEventListener('load',()=>{ try{ updateEnergyUI(); }catch(e){} });
+</script>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -53,7 +60,8 @@
     .shooter-ring-blue { border: 4px solid rgba(59,130,246,0.98); box-shadow: 0 0 24px rgba(59,130,246,0.95), 0 0 40px rgba(59,130,246,0.55); animation: ringPulseBlue 0.8s ease-in-out infinite; border-radius: 0.5rem; }
     .shooter-ring-red  { border: 4px solid rgba(239,68,68,0.98); box-shadow: 0 0 24px rgba(239,68,68,0.95), 0 0 40px rgba(239,68,68,0.55); animation: ringPulseRed  0.8s ease-in-out infinite; border-radius: 0.5rem; }
     @keyframes ringPulseBlue {
-      0%   { transform: scale(1);     box-shadow: 0 0 18px rgba(59,130,246,0.85), 0 0 26px rgba(59,130,246,0.35); }
+  0%   { transform: scale(1);    box-shadow: 0 0 18px rgba(59,130,246,.85), 0 0 26px rgba(59,130,246,.35); }
+  }
       50%  { transform: scale(1.08);  box-shadow: 0 0 34px rgba(59,130,246,1),   0 0 60px rgba(59,130,246,0.6);  }
       100% { transform: scale(1);     box-shadow: 0 0 18px rgba(59,130,246,0.85), 0 0 26px rgba(59,130,246,0.35); }
     }
@@ -61,14 +69,25 @@
       100% { transform: scale(1);     box-shadow: 0 0 12px rgba(59,130,246,0.75); }
     }
     @keyframes ringPulseRed {
-      0%   { transform: scale(1);     box-shadow: 0 0 18px rgba(239,68,68,0.85), 0 0 26px rgba(239,68,68,0.35); }
+  0%   { transform: scale(1);    box-shadow: 0 0 18px rgba(239,68,68,.85), 0 0 26px rgba(239,68,68,.35); }
+  }
       50%  { transform: scale(1.08);  box-shadow: 0 0 34px rgba(239,68,68,1),   0 0 60px rgba(239,68,68,0.6);  }
       100% { transform: scale(1);     box-shadow: 0 0 18px rgba(239,68,68,0.85), 0 0 26px rgba(239,68,68,0.35); }
     }
       50%  { transform: scale(1.05);  box-shadow: 0 0 26px rgba(239,68,68,1);    }
       100% { transform: scale(1);     box-shadow: 0 0 12px rgba(239,68,68,0.75); }
     }
-    </style>
+    
+/* Stable grid cell sizing */
+
+#game-demo > div.cell {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+</style>
 </head>
 <body class="bg-gray-900 text-white">
 <!-- Hero (оставляем заголовок раздела) -->
@@ -89,6 +108,11 @@
 <div class="text-2xl md:text-3xl font-orbitron font-extrabold" id="win-text"></div>
 <div class="mt-2 text-sm md:text-base text-gray-300" id="win-meta"></div>
 </div>
+
+<div id="energy-panel" class="flex gap-4 items-center mb-2 text-sm">
+  <div class="px-2 py-1 rounded bg-gray-800">R1 ⚡ <span id="energy-r1">-</span> | HP <span id="hp-r1">-</span> | 🛡 <span id="shield-r1">0</span></div>
+  <div class="px-2 py-1 rounded bg-gray-800">R2 ⚡ <span id="energy-r2">-</span> | HP <span id="hp-r2">-</span> | 🛡 <span id="shield-r2">0</span></div>
+  </div>
 <div class="grid grid-cols-10 gap-1 h-full" id="game-demo"></div>
 </div>
 <!-- Stats under arena -->
@@ -102,6 +126,18 @@
 <div class="mt-4">
 <label class="block text-xs text-gray-400 mb-1">Скорость симуляции: <span id="speed-label">1.0 с/ход</span></label>
 <input class="w-full accent-purple-500" id="speed-slider" max="3" min="1" step="0.25" type="range" value="1"/>
+</div>
+<div class="mt-3 text-xs flex items-center justify-center gap-3">
+<label class="text-gray-400" for="grid-size">Размер сетки:</label>
+<input class="w-40" id="grid-size" max="20" min="6" type="range" value="10"/>
+<span class="text-gray-300" id="grid-size-val">10×10</span>
+</div>
+<div class="mt-3 text-xs flex items-center justify-center gap-3">
+<label class="inline-flex items-center gap-2">
+<input class="accent-purple-500" id="fog-toggle" type="checkbox"/>
+<span class="text-gray-400">Fog of War</span>
+</label>
+<span class="text-gray-500">радиус: 3</span>
 </div>
 </div>
 </div>
@@ -118,7 +154,7 @@
 </div></section>
 <script>
     // ====== Game Demo code with trails + action log (same behavior) ======
-    const GRID_SIZE = 10;
+    let GRID_SIZE = 10;
     let robot1 = { x: 1, y: 1, hp: 100, shield: 0 };
     let robot2 = { x: 8, y: 8, hp: 100, shield: 0 };
     let traps = [];
@@ -182,7 +218,67 @@ function setupSpeedControls(){
 const SCAN_RADIUS = 2;
 let scanOverlay = []; // items: {x,y,expiresAt,by}
 const SCAN_PROB = 0.30;
+// ===== Scan visuals (tunable) =====
+const SCAN_BLUE_RGB = '59,130,246';   // R1 outline/fill color (r,g,b)
+const SCAN_RED_RGB  = '239,68,68';    // R2 outline/fill color (r,g,b)
+const SCAN_OUTLINE_WIDTH = 2;         // px
+const SCAN_FILL_ALPHA    = 0.12;      // 0..1 transparency of fill
+const SCAN_GLOW_ALPHA    = 0.55;      // 0..1 transparency of glow
+// Fog of War
+let FOG_ENABLED = false;
+const FOG_RADIUS = 3;
+
+function isCellVisible(x, y){
+  if (!FOG_ENABLED) return true;
+  const viewer = (currentRobot === 1) ? robot1 : robot2;
+  const dist = Math.max(Math.abs(x - viewer.x), Math.abs(y - viewer.y));
+  if (dist <= FOG_RADIUS) return true;
+  for (let k = scanOverlay.length - 1; k >= 0; k--) {
+    const s = scanOverlay[k];
+    if (s.by === currentRobot && Date.now() < s.expiresAt && s.x === x && s.y === y) return true;
+  }
+  return false;
+}
+
+function applyGridStyles(){
+  const grid = document.getElementById('game-demo');
+  if (!grid) return;
+  grid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+  grid.style.gridTemplateRows = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+}
+
+function setGridSize(n){
+  n = parseInt(n, 10);
+  if (isNaN(n)) n = 10;
+  n = Math.max(4, Math.min(30, n));
+  GRID_SIZE = n;
+  // Reset game state safely
+  traps = [];
+  shots = [];
+  trail1.length = 0;
+  trail2.length = 0;
+  scanOverlay.length = 0;
+  hitUntil[1] = 0; hitUntil[2] = 0;
+  lastAction[1] = null; lastAction[2] = null;
+  actionLog.length = 0; renderLog();
+  energy[1] = 6; energy[2] = 6;
+  turnNumber = 1; currentRobot = 1;
+  spawnRobotsRandomly();
+energy = { 1: TURN_ENERGY, 2: TURN_ENERGY };
+turnFresh = { 1: true, 2: true };
+try{ updateEnergyUI(); }catch(e){}
+  pushTrail(1, robot1.x, robot1.y);
+  pushTrail(2, robot2.x, robot2.y);
+  applyGridStyles();
+  initGrid();
+  render();
+}
+
+// ==================================
+
 let shootFxUntil = { 1: 0, 2: 0 };
+
+let currentTurnActions = 0;
 // --- Energy system ---
 const ENERGY = { move: 1, shoot: 3, scan: 2, shield: 4, trap: 3 };
 const ENERGY_REGEN = 3;
@@ -200,6 +296,10 @@ function chebyshev(a,b){ return Math.max(Math.abs(a.x-b.x), Math.abs(a.y-b.y)); 
 function spawnRobotsRandomly(minSep = 4){
   // Ensure objects exist
   if (!robot1) robot1 = { x: 0, y: 0, hp: 100, shield: 0 };
+
+// --- Turn-based energy budget ---
+TURN_ENERGY = 20;
+turnFresh = { 1: true, 2: true };
   if (!robot2) robot2 = { x: 0, y: 0, hp: 100, shield: 0 };
   let p1 = { x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) };
   let p2 = { x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) };
@@ -254,19 +354,54 @@ function renderLog(){
     }
     function pushTrail(id,x,y){ const arr = id===1?trail1:trail2; arr.push({x,y}); if(arr.length>MAX_TRAIL) arr.shift(); }
 
-    function initGrid(){
-      const grid = document.getElementById('game-demo'); grid.innerHTML='';
-      for(let y=0;y<GRID_SIZE;y++){ for(let x=0;x<GRID_SIZE;x++){ const cell=document.createElement('div'); cell.className='bg-gray-800 rounded transition-all duration-300'; cell.dataset.x=x; cell.dataset.y=y; grid.appendChild(cell);}}
+    function initGrid(){ applyGridStyles(); const grid = document.getElementById('game-demo'); grid.innerHTML='';
+      for(let y=0;y<GRID_SIZE;y++){ for(let x=0;x<GRID_SIZE;x++){ const cell=document.createElement('div'); cell.className = 'cell bg-gray-800 rounded transition-all duration-300'; cell.dataset.x=x; cell.dataset.y=y; grid.appendChild(cell);}}
       pushTrail(1, robot1.x, robot1.y); pushTrail(2, robot2.x, robot2.y);
     }
 
     function appendShadow(existing, extra){ if(!existing||existing==='none') return extra; return existing+', '+extra; }
 
-    function render(){
+    function updateEnergyUI(){
+  const e1 = document.getElementById('energy-r1');
+  const e2 = document.getElementById('energy-r2');
+  const hp1 = document.getElementById('hp-r1');
+  const hp2 = document.getElementById('hp-r2');
+  const sh1 = document.getElementById('shield-r1');
+  const sh2 = document.getElementById('shield-r2');
+
+  // Показываем реальную энергию только для активного робота,
+  // а для ожидающего — всегда бюджет следующего хода (20)
+  const e1Val = (typeof currentRobot !== 'undefined' && currentRobot === 1) ? energy[1] : TURN_ENERGY;
+  const e2Val = (typeof currentRobot !== 'undefined' && currentRobot === 2) ? energy[2] : TURN_ENERGY;
+
+  if (e1) e1.textContent = String(e1Val);
+  if (e2) e2.textContent = String(e2Val);
+  if (hp1) hp1.textContent = String(robot1.hp);
+  if (hp2) hp2.textContent = String(robot2.hp);
+  if (sh1) sh1.textContent = String(robot1.shield || 0);
+  if (sh2) sh2.textContent = String(robot2.shield || 0);
+}
+
+function render(){
       const cells = document.querySelectorAll('#game-demo > div');
       cells.forEach(cell => {
-        const x = +cell.dataset.x, y = +cell.dataset.y;
-        cell.className='bg-gray-800 rounded transition-all duration-300'; cell.innerHTML=''; cell.style.boxShadow='none'; cell.style.backgroundColor=''; cell.style.backgroundImage='none'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.filter=''; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.backgroundImage='none'; cell.style.backgroundBlendMode=''; cell.style.backgroundColor=''; cell.style.outline='none';
+        
+  // Fog of War: hide invisible cells completely (Option 1)
+    if (typeof isCellVisible === 'function') {
+      const cx = +cell.dataset.x;
+      const cy = +cell.dataset.y;
+      const visible = isCellVisible(cx, cy);
+      if (!visible) {
+        cell.className = 'cell bg-gray-900 rounded transition-all duration-300 opacity-40';
+        cell.style.filter = 'grayscale(0.8) brightness(0.6)';
+        cell.textContent = '';
+        cell.style.outline = '';
+        cell.style.boxShadow = '';
+        return;
+}
+    }
+    const x = +cell.dataset.x, y = +cell.dataset.y;
+        cell.className = 'cell bg-gray-800 rounded transition-all duration-300'; cell.innerHTML=''; cell.style.boxShadow='none'; cell.style.backgroundColor=''; cell.style.backgroundImage='none'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.backgroundColor=''; cell.style.backgroundImage='none'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.filter=''; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.outline='none'; cell.style.outlineOffset='0px'; cell.style.backgroundImage='none'; cell.style.backgroundBlendMode=''; cell.style.backgroundColor=''; cell.style.outline='none';
         let shadow='';
         const i1 = trail1.findIndex(p=>p.x===x && p.y===y);
         if(i1!==-1){ const t=(i1+1)/trail1.length, a=0.30*t+0.05; shadow=appendShadow(shadow,`inset 0 0 14px rgba(59,130,246,${a}), 0 0 18px rgba(59,130,246,${a*.8})`); }
@@ -282,37 +417,29 @@ if (isScanned) {
   shadow = appendShadow(shadow, '0 0 10px rgba(134,239,172,0.35)');
 }
 if (shadow) cell.style.boxShadow = shadow;
-var scanEntry = null;
+let scanEntry = null;
 for (let k = scanOverlay.length - 1; k >= 0; k--) {
   const s = scanOverlay[k];
   if (s.x===x && s.y===y && Date.now() < s.expiresAt) { scanEntry = s; break; }
 }
 if (scanEntry) {
   const isBlue = scanEntry.by === 1;
-  cell.style.outline = isBlue ? '2px solid rgba(59,130,246,0.98)' : '2px solid rgba(239,68,68,0.98)';
+  const rgb = isBlue ? SCAN_BLUE_RGB : SCAN_RED_RGB;
+  cell.style.backgroundColor = `rgba(${rgb}, ${SCAN_FILL_ALPHA})`;
+  cell.style.outline = `${SCAN_OUTLINE_WIDTH}px solid rgba(${rgb}, 0.98)`;
   cell.style.outlineOffset = '-2px';
-  shadow = appendShadow(shadow, isBlue ? '0 0 10px rgba(59,130,246,0.55)' : '0 0 10px rgba(239,68,68,0.55)');
-}
-if (shadow) cell.style.boxShadow = shadow;
-var scanEntry = null;
-for (let k = scanOverlay.length - 1; k >= 0; k--) {
-  const s = scanOverlay[k];
-  if (s.x===x && s.y===y && Date.now() < s.expiresAt) { scanEntry = s; break; }
-}
-if (scanEntry) {
-  const isBlue = scanEntry.by === 1;
-  // light translucent fill + colored outline
-  cell.style.backgroundColor = isBlue ? 'rgba(59,130,246,0.12)' : 'rgba(239,68,68,0.12)';
-  cell.style.outline = isBlue ? '2px solid rgba(59,130,246,0.98)' : '2px solid rgba(239,68,68,0.98)';
-  cell.style.outlineOffset = '-2px';
-  shadow = appendShadow(shadow, isBlue ? '0 0 10px rgba(59,130,246,0.55)' : '0 0 10px rgba(239,68,68,0.55)');
+  shadow = appendShadow(shadow, `0 0 10px rgba(${rgb}, ${SCAN_GLOW_ALPHA})`);
 }
 if (shadow) cell.style.boxShadow = shadow;
 const shot = shots.find(s=>s.x===x && s.y===y); if(shot) cell.className='bg-yellow-500 rounded transition-all duration-300';
         const trap = traps.find(t=>t.x===x && t.y===y); if(trap){ cell.className='bg-orange-500 rounded opacity-50 transition-all duration-300'; cell.innerHTML='<div class="w-full h-full flex items-center justify-center text-xs">💣</div>'; }
 
         if(robot1.x===x && robot1.y===y){
-          const pill=(lastAction[1] && Date.now()<lastAction[1].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[1]?.kind==='damage'?'text-red-400':''}">R1: ${lastAction[1].text}</div>`:'';
+          const pill=(lastAction[1] && Date.now()<lastAction[1].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[1]?.kind==='damage'?'text-red-400':''}
+// FX for shooter R1
+if (robot1.x===x && robot1.y===y && typeof shootFxUntil !== 'undefined' && Date.now() < (shootFxUntil[1]||0)) {
+  cell.className += ' shooter-saturate shooter-ring-blue';
+}">R1: ${lastAction[1].text}</div>`:'';
           const isHit = Date.now() < hitUntil[1];
           cell.className='bg-blue-600 rounded transition-all duration-300 pulse-glow';
           cell.innerHTML=`<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative ${isHit ? 'hit-pulse shake' : ''}">
@@ -322,7 +449,11 @@ const shot = shots.find(s=>s.x===x && s.y===y); if(shot) cell.className='bg-yell
           </div>`;
         }
         if(robot2.x===x && robot2.y===y){
-          const pill=(lastAction[2] && Date.now()<lastAction[2].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[2]?.kind==='damage'?'text-red-400':''}">R2: ${lastAction[2].text}</div>`:'';
+          const pill=(lastAction[2] && Date.now()<lastAction[2].expireAt)?`<div class="pill absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-black/60 border border-white/10 ${lastAction[2]?.kind==='damage'?'text-red-400':''}
+// FX for shooter R2
+if (robot2.x===x && robot2.y===y && typeof shootFxUntil !== 'undefined' && Date.now() < (shootFxUntil[2]||0)) {
+  cell.className += ' shooter-saturate shooter-ring-red';
+}">R2: ${lastAction[2].text}</div>`:'';
           const isHit = Date.now() < hitUntil[2];
           cell.className='bg-red-600 rounded transition-all duration-300 pulse-glow';
           cell.innerHTML=`<div class="w-full h-full flex items-center justify-center text-white font-bold text-xs relative ${isHit ? 'hit-pulse shake' : ''}">
@@ -355,7 +486,10 @@ const shot = shots.find(s=>s.x===x && s.y===y); if(shot) cell.className='bg-yell
         }
       }
       const enemy = (id===1) ? robot2 : robot1;
-      const sawEnemy = Math.max(Math.abs(enemy.x - me.x), Math.abs(enemy.y - me.y)) <= radius;
+      
+  let noEnergy = false;
+const energyBefore = energy[id];
+const sawEnemy = Math.max(Math.abs(enemy.x - me.x), Math.abs(enemy.y - me.y)) <= radius;
       const trapsCount = traps.filter(t => Math.max(Math.abs(t.x - me.x), Math.abs(t.y - me.y)) <= radius).length;
       return `сканирование r=${radius}: ${sawEnemy?`враг обнаружен`:`врага нет`}, ловушек: ${trapsCount}`;
     }
@@ -380,10 +514,13 @@ function makeMove(){
   const me = (id === 1) ? robot1 : robot2;
   const enemy = (id === 1) ? robot2 : robot1;
 
-  // Энергия: восстановление в начале хода
-  energy[id] = Math.max(0, energy[id] + ENERGY_REGEN);
-
-  const dx = enemy.x - me.x;
+  
+  let noEnergy = false;
+const energyBefore = energy[id];
+// Энергия хода: 20 в начале нового хода
+  if (turnFresh[id]) { energy[id] = TURN_ENERGY; turnFresh[id] = false; }
+  currentTurnActions = 0;
+const dx = enemy.x - me.x;
   const dy = enemy.y - me.y;
   const distance = Math.max(Math.abs(dx), Math.abs(dy));
 
@@ -399,19 +536,25 @@ function makeMove(){
     else if (rnd < 0.75 && spendEnergy(id, ENERGY.trap))                    { note = placeTrap(me); }
     else if (rnd < 0.90 && me.shield === 0 && me.hp < 60 && spendEnergy(id, ENERGY.shield)) { me.shield = 2; note = 'активировал щит'; }
     else if (spendEnergy(id, ENERGY.move))                                  { note = randomMove(id, me); }
-    else { note = 'пропустил ход (нет энергии)'; }
+    else { note = 'пропустил ход (нет энергии)'; noEnergy = true; }
   }
 
-  if (me.shield > 0) me.shield--;
+  if (me.shield > 0) me.shield--;  
+  if (!noEnergy && energy[id] < energyBefore) { currentTurnActions++; }
+if (noEnergy) {
+    currentRobot = (currentRobot === 1) ? 2 : 1;
+    turnFresh[currentRobot] = true;
+    if (currentRobot === 1) turnNumber++;
+  }
+  if (noEnergy) { currentTurnActions = 0; }
 
-  currentRobot = (currentRobot === 1) ? 2 : 1;
-  if (currentRobot === 1) turnNumber++;
-
-  if (note) {
+if (note) {
     setLastAction(id, note);
     if (typeof addLog === 'function') addLog(id, `${note} [энергия: ${energy[id]}]`, turnAtStart);
   }
   render();
+
+  try{ updateEnergyUI(); }catch(e){}
 }
 
 function shoot(shooter, target){
@@ -461,7 +604,14 @@ function shoot(shooter, target){
   return `выстрел ${dirText} — промах`;
 }
 
-    function moveTowards(id,me,target){ const dx=Math.sign(target.x-me.x), dy=Math.sign(target.y-me.y); const useX=Math.abs(dx)>Math.abs(dy); return moveRobot(id,me,useX?dx:0,useX?0:dy,'шаг'); }
+    function moveTowards(id, me, target){
+  const diffX = Math.abs(target.x - me.x);
+  const diffY = Math.abs(target.y - me.y);
+  const stepX = Math.sign(target.x - me.x);
+  const stepY = Math.sign(target.y - me.y);
+  const useX = diffX >= diffY;
+  return moveRobot(id, me, useX ? stepX : 0, useX ? 0 : stepY, 'шаг');
+}
     function randomMove(id,me){ const dirs=[{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}]; const d=dirs[Math.floor(Math.random()*dirs.length)]; return moveRobot(id,me,d.dx,d.dy,'случайный шаг'); }
     function moveRobot(id,me,dx,dy,label){
       const from={x:me.x,y:me.y}; const newX=me.x+dx, newY=me.y+dy; let moved=false, trapHit=false;
@@ -474,6 +624,8 @@ function shoot(shooter, target){
     
 
 function resetGame(){
+  turnFresh = { 1: true, 2: true };
+  energy = { 1: TURN_ENERGY, 2: TURN_ENERGY };
   // Reset state
   robot1 = { x: 0, y: 0, hp: 100, shield: 0 };
   robot2 = { x: 0, y: 0, hp: 100, shield: 0 };
@@ -498,6 +650,27 @@ function resetGame(){
   render();
 
 }
+
+(function(){
+  const r = document.getElementById('grid-size');
+  const s = document.getElementById('grid-size-val');
+  if (r && s) {
+    r.value = GRID_SIZE;
+    s.textContent = `${GRID_SIZE}×${GRID_SIZE}`;
+    r.addEventListener('input', e => { s.textContent = `${e.target.value}×${e.target.value}`; });
+    r.addEventListener('change', e => { setGridSize(e.target.value); });
+  }
+  applyGridStyles();
+})();
+
+
+(function(){
+  const fog = document.getElementById('fog-toggle');
+  if (fog) {
+    fog.checked = FOG_ENABLED;
+    fog.addEventListener('change', () => { FOG_ENABLED = fog.checked; render(); });
+  }
+})();
 spawnRobotsRandomly();
 pushTrail(1, robot1.x, robot1.y);
 pushTrail(2, robot2.x, robot2.y);
