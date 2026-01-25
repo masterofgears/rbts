@@ -1,38 +1,69 @@
-<script>
-  const tg = window.Telegram.WebApp;
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mini App Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
 
-  // При загрузке WebApp
-  tg.ready();
+    .screen {
+      display: none;
+    }
 
-  // Показываем кнопку с текстом "Назад"
-  function showBackButton() {
-    tg.MainButton.setText("🔙 Назад");
-    tg.MainButton.show();
+    .active {
+      display: block;
+    }
 
-    // Назначаем обработчик
-    tg.MainButton.onClick(() => {
-      // Здесь можно, например, вернуться к предыдущему экрану
-      goBack();
-    });
-  }
+    h1 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="home" class="screen active">
+    <h1>🏠 Главный экран</h1>
+    <p>Добро пожаловать! Нажмите кнопку, чтобы открыть детали.</p>
+  </div>
 
-  // Показываем кнопку "Закрыть"
-  function showCloseButton() {
-    tg.MainButton.setText("❌ Закрыть");
-    tg.MainButton.show();
+  <div id="details" class="screen">
+    <h1>📄 Детали</h1>
+    <p>Вот подробная информация. Нажмите "Назад", чтобы вернуться.</p>
+  </div>
 
-    // При нажатии просто закрываем WebApp
-    tg.MainButton.onClick(() => {
-      tg.close();
-    });
-  }
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
 
-  function goBack() {
-    // Логика возврата
-    console.log("Переход назад");
-    // Например, показать предыдущий экран
-  }
+    const homeScreen = document.getElementById('home');
+    const detailsScreen = document.getElementById('details');
 
-  // Пример: сначала показать кнопку "Назад"
-  showBackButton();
-</script>
+    function showHome() {
+      homeScreen.classList.add('active');
+      detailsScreen.classList.remove('active');
+
+      tg.MainButton.setText("📄 Открыть детали");
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => {
+        showDetails();
+      });
+    }
+
+    function showDetails() {
+      homeScreen.classList.remove('active');
+      detailsScreen.classList.add('active');
+
+      tg.MainButton.setText("🔙 Назад");
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => {
+        showHome();
+      });
+    }
+
+    showHome(); // Старт с главного экрана
+  </script>
+</body>
+</html>
