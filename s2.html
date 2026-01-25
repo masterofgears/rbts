@@ -35,9 +35,16 @@
     <p>Вот подробная информация. Нажмите "Назад", чтобы вернуться.</p>
   </div>
 
+
+
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
+
+    alert('ok');
+    console.log("tg loaded:", tg);
+console.log("platform:", tg.platform);
+
 
     const homeScreen = document.getElementById('home');
     const detailsScreen = document.getElementById('details');
