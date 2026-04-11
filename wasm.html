@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Сравнение методов сжатия</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #0b1220;
+      --border: #243046;
+      --text: #e5eefc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #34d399;
+      --error: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .mt-16 { margin-top: 16px; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="file"], input[type="range"], button {
+      width: 100%;
+    }
+
+    input[type="file"] {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .range-value {
+      min-width: 40px;
+      text-align: right;
+      color: var(--text);
+    }
+
+    .run-btn {
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #082032;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+      height: 42px;
+    }
+
+    .run-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      min-height: 42px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      align-self: start;
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .badge.ok { color: var(--ok); }
+    .badge.error { color: var(--error); }
+
+    .preview {
+      width: 100%;
+      aspect-ratio: 16/10;
+      object-fit: contain;
+      display: block;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .preview-empty {
+      width: 100%;
+      aspect-ratio: 16/10;
+      display: grid;
+      place-items: center;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      color: var(--error);
+      text-align: center;
+      padding: 12px;
+    }
+
+    .meta {
+      padding: 10px 14px 14px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric:last-child { border-bottom: none; }
+    .metric-label { color: var(--muted); font-size: 12px; }
+    .metric-value { color: var(--text); font-size: 13px; text-align: right; }
+
+    .download-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .download-link:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      color: #bae6fd;
+      font-size: 12px;
+    }
+
+    .error-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(251, 113, 133, 0.08);
+      border: 1px solid rgba(251, 113, 133, 0.18);
+      color: #fecdd3;
+      font-size: 12px;
+    }
+
+    code {
+      background: var(--panel-2);
+      padding: 1px 5px;
+      border-radius: 6px;
+      color: var(--text);
+    }
+
+    @media (max-width: 900px) {
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>Сравнение методов конвертации: WASM vs Browser</h1>
+      <p>Сравниваются два способа JPEG-кодирования: <code>@jsquash/jpeg</code> и <code>canvas.toBlob("image")</code></p>
+    </div>
+
+    <div class="panel mt-16">
+      <div class="controls">
+        <div class="field">
+          <label for="fileInput">Изображение</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div id="fileLabel" class="metric-value" style="text-align:left;color:var(--muted)">Файл не выбран</div>
+        </div>
+
+        <div class="field">
+          <label for="qualityInput">JPEG quality</label>
+          <div class="range-row">
+            <input id="qualityInput" type="range" min="40" max="95" step="1" value="80" />
+            <div id="qualityValue" class="range-value">80</div>
+          </div>
+        </div>
+
+        <button id="runBtn" class="run-btn">Запустить</button>
+      </div>
+
+      <div id="status" class="status">Выберите изображение и запустите сравнение.</div>
+    </div>
+
+    <div id="cards" class="cards"></div>
+  </div>
+
+  <script type="module">
+    const JSQUASH_MODULE_URL = 'https://esm.sh/@jsquash/jpeg';
+
+    const state = {
+      file: null,
+      quality: 80,
+      running: false,
+      jsquashEncodePromise: null,
+      downloadUrls: [],
+    };
+
+    const els = {
+      fileInput: document.getElementById('fileInput'),
+      fileLabel: document.getElementById('fileLabel'),
+      qualityInput: document.getElementById('qualityInput'),
+      qualityValue: document.getElementById('qualityValue'),
+      runBtn: document.getElementById('runBtn'),
+      status: document.getElementById('status'),
+      cards: document.getElementById('cards'),
+    };
+
+    function setStatus(text) {
+      els.status.textContent = text;
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return '—';
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function formatMs(ms) {
+      if (!Number.isFinite(ms)) return '—';
+      return `${ms.toFixed(1)} ms`;
+    }
+
+    function clampQuality(value) {
+      return Math.max(40, Math.min(95, Math.round(value)));
+    }
+
+    function runInternalTests() {
+      const cases = [
+        { actual: clampQuality(10), expected: 40, name: 'quality low clamp' },
+        { actual: clampQuality(120), expected: 95, name: 'quality high clamp' },
+        { actual: clampQuality(80.4), expected: 80, name: 'quality round' },
+      ];
+
+      for (const test of cases) {
+        if (test.actual !== test.expected) {
+          throw new Error(`Internal test failed: ${test.name}`);
+        }
+      }
+    }
+
+    function resetDownloadUrls() {
+      for (const url of state.downloadUrls) {
+        URL.revokeObjectURL(url);
+      }
+      state.downloadUrls = [];
+    }
+
+    function registerDownloadUrl(url) {
+      state.downloadUrls.push(url);
+      return url;
+    }
+
+    function getBaseFileName(filename) {
+      const cleaned = String(filename || 'image').replace(/\.[^.]+$/, '');
+      return cleaned.replace(/[^a-zA-Z0-9._-]+/g, '_');
+    }
+
+    function buildDownloadName(originalFilename, method, quality, width, height) {
+      const baseName = getBaseFileName(originalFilename);
+      return `${baseName}-${method}-q${quality}-${width}x${height}.jpg`;
+    }
+
+    async function getJsquashEncode() {
+      if (!state.jsquashEncodePromise) {
+        state.jsquashEncodePromise = import(JSQUASH_MODULE_URL).then((mod) => {
+          if (typeof mod.encode !== 'function') {
+            throw new Error('Не найден export encode в @jsquash/jpeg');
+          }
+          return mod.encode;
+        });
+      }
+      return await state.jsquashEncodePromise;
+    }
+
+    async function blobToDataUrl(blob) {
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') resolve(reader.result);
+          else reject(new Error('Не удалось получить data URL.'));
+        };
+        reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function fileToDataUrl(file) {
+      return await blobToDataUrl(file);
+    }
+
+    async function decodeBitmap(file) {
+      if (typeof createImageBitmap === 'function') {
+        try {
+          return await createImageBitmap(file);
+        } catch {
+          // Safari fallback below
+        }
+      }
+
+      const dataUrl = await fileToDataUrl(file);
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('Не удалось декодировать изображение через HTMLImageElement.'));
+        el.src = dataUrl;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) throw new Error('2D canvas is not available');
+      ctx.drawImage(img, 0, 0);
+      return await createImageBitmap(canvas);
+    }
+
+    async function dataUrlToBlob(dataUrl) {
+      const response = await fetch(dataUrl);
+      return await response.blob();
+    }
+
+    async function canvasToBlob(canvas, mimeType, quality) {
+      const normalizedQuality = Math.max(0, Math.min(1, quality));
+
+      if (typeof canvas.toBlob === 'function') {
+        try {
+          const blob = await new Promise((resolve) => {
+            canvas.toBlob((value) => resolve(value), mimeType, normalizedQuality);
+          });
+
+          if (blob && blob.size > 0) {
+            if (mimeType === 'image/jpeg' && blob.type && blob.type !== 'image/jpeg') {
+              // fallback below
+            } else {
+              return blob;
+            }
+          }
+        } catch {
+          // fallback below
+        }
+      }
+
+      const dataUrl = canvas.toDataURL(mimeType, normalizedQuality);
+      const blob = await dataUrlToBlob(dataUrl);
+      if (!blob || blob.size === 0) {
+        throw new Error('Не удалось получить Blob из canvas через toBlob/toDataURL.');
+      }
+      return blob;
+    }
+
+    function makeCanvas(width, height) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) throw new Error('2D canvas is not available');
+      return { canvas, ctx };
+    }
+
+    async function readOriginalFileInfo(file) {
+      const previewUrl = await fileToDataUrl(file);
+      const bitmap = await decodeBitmap(file);
+      try {
+        return { width: bitmap.width, height: bitmap.height, previewUrl };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function runJsquash(file, quality) {
+      const encode = await getJsquashEncode();
+      const started = performance.now();
+      const bitmap = await decodeBitmap(file);
+      try {
+        const { canvas, ctx } = makeCanvas(bitmap.width, bitmap.height);
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+        const encoded = await encode(
+          {
+            data: imageData.data,
+            width: imageData.width,
+            height: imageData.height,
+          },
+          { quality }
+        );
+        const blob = new Blob([encoded], { type: 'image/jpeg' });
+        const previewUrl = await blobToDataUrl(blob);
+        const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
+
+        return {
+          key: 'jsquash',
+          name: '@jsquash/jpeg',
+          source: 'full pipeline',
+          ok: true,
+          size: blob.size,
+          width: imageData.width,
+          height: imageData.height,
+          durationMs: performance.now() - started,
+          previewUrl,
+          downloadUrl,
+          downloadName: buildDownloadName(file.name, 'jsquash', quality, imageData.width, imageData.height),
+        };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function runCanvasMethod(file, quality) {
+      const started = performance.now();
+      const bitmap = await decodeBitmap(file);
+      try {
+        const { canvas, ctx } = makeCanvas(bitmap.width, bitmap.height);
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        const blob = await canvasToBlob(canvas, 'image/jpeg', quality / 100);
+        const previewUrl = await blobToDataUrl(blob);
+        const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
+
+        return {
+          key: 'canvas',
+          name: 'canvas.toBlob("image")',
+          source: 'full pipeline',
+          ok: true,
+          size: blob.size,
+          width: canvas.width,
+          height: canvas.height,
+          durationMs: performance.now() - started,
+          previewUrl,
+          downloadUrl,
+          downloadName: buildDownloadName(file.name, 'canvas', quality, canvas.width, canvas.height),
+        };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    function metricHtml(label, value) {
+      return `
+        <div class="metric">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+        </div>
+      `;
+    }
+
+    function renderCard(item) {
+      const badgeClass = item.ok ? 'ok' : 'error';
+      const preview = item.previewUrl
+        ? `<img class="preview" src="${item.previewUrl}" alt="${item.name}" />`
+        : `<div class="preview-empty">${item.error || 'Нет результата'}</div>`;
+
+      return `
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">${item.name}</div>
+              <div class="card-subtitle">${item.source || ''}</div>
+            </div>
+            <div class="badge ${badgeClass}">${item.ok ? 'OK' : 'Ошибка'}</div>
+          </div>
+          ${preview}
+          <div class="meta">
+            ${metricHtml('Размер', formatBytes(item.size))}
+            ${item.durationMs ? metricHtml('Время выполнения', formatMs(item.durationMs)) : ''}
+            ${item.downloadUrl ? metricHtml('Скачать', `<a class="download-link" href="${item.downloadUrl}" download="${item.downloadName}">${item.downloadName}</a>`) : ''}
+            ${item.note ? metricHtml('Разрешение', item.note) : ''}
+            ${!item.ok && item.error ? `<div class="error-box">${item.error}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCards(items) {
+      els.cards.innerHTML = items.filter(Boolean).map(renderCard).join('');
+    }
+
+    function setRunning(value) {
+      state.running = value;
+      els.runBtn.disabled = value || !state.file;
+      els.runBtn.textContent = value ? 'Выполняется' : 'Запустить';
+    }
+
+    async function runComparison() {
+      if (!state.file) {
+        setStatus('Сначала выберите изображение.');
+        return;
+      }
+
+      setRunning(true);
+      resetDownloadUrls();
+      els.cards.innerHTML = '';
+
+      try {
+        setStatus('Загрузка кодека @jsquash/jpeg...');
+        await getJsquashEncode();
+
+        setStatus('Чтение оригинального файла...');
+        const originalInfo = await readOriginalFileInfo(state.file);
+        const original = {
+          key: 'original',
+          name: 'Оригинал',
+          source: 'Исходный File',
+          ok: true,
+          size: state.file.size,
+          previewUrl: originalInfo.previewUrl,
+          note: `${originalInfo.width} × ${originalInfo.height}`,
+        };
+        renderCards([original]);
+
+        const quality = clampQuality(state.quality);
+
+        setStatus('1/2 — запуск @jsquash/jpeg...');
+        const r1 = await runJsquash(state.file, quality);
+        renderCards([original, r1]);
+
+        setStatus('2/2 — запуск canvas.toBlob("image")...');
+        const r2 = await runCanvasMethod(state.file, quality);
+        renderCards([original, r1, r2]);
+
+        setStatus('Сравнение завершено.');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setStatus(`Ошибка: ${message}`);
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    els.fileInput.addEventListener('change', (event) => {
+      resetDownloadUrls();
+      state.file = event.target.files?.[0] || null;
+      els.fileLabel.textContent = state.file
+        ? `${state.file.name} · ${formatBytes(state.file.size)}`
+        : 'Файл не выбран';
+      els.runBtn.disabled = !state.file || state.running;
+      els.cards.innerHTML = '';
+      setStatus('Выберите изображение и запустите сравнение.');
+    });
+
+    els.qualityInput.addEventListener('input', (event) => {
+      state.quality = Number(event.target.value);
+      els.qualityValue.textContent = String(state.quality);
+    });
+
+    els.runBtn.addEventListener('click', runComparison);
+
+    runInternalTests();
+    setRunning(false);
+  </script>
+</body>
+</html>
