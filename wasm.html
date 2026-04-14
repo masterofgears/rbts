@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Сравнение методов сжатия</title>
+  <title>Сравнение методов конвертации JPEG и WebP</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -26,7 +26,7 @@
     }
 
     .wrap {
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -206,6 +206,7 @@
       color: var(--accent);
       text-decoration: none;
       font-weight: 600;
+      word-break: break-word;
     }
 
     .download-link:hover {
@@ -247,8 +248,11 @@
 <body>
   <div class="wrap">
     <div class="panel">
-      <h1>Сравнение методов конвертации: WASM vs Browser</h1>
-      <p>Сравниваются два способа JPEG-кодирования: <code>@jsquash/jpeg</code> и <code>canvas.toBlob("image")</code></p>
+      <h1>Сравнение методов конвертации: JPEG и WebP</h1>
+      <p>
+        Сравниваются четыре способа кодирования: <code>@jsquash/jpeg</code>, <code>canvas.toBlob("image/jpeg")</code>,
+        <code>@jsquash/webp</code> и <code>canvas.toBlob("image/webp")</code>.
+      </p>
     </div>
 
     <div class="panel mt-16">
@@ -260,7 +264,7 @@
         </div>
 
         <div class="field">
-          <label for="qualityInput">JPEG quality</label>
+          <label for="qualityInput">Качество</label>
           <div class="range-row">
             <input id="qualityInput" type="range" min="40" max="95" step="1" value="80" />
             <div id="qualityValue" class="range-value">80</div>
@@ -277,13 +281,15 @@
   </div>
 
   <script type="module">
-    const JSQUASH_MODULE_URL = 'https://esm.sh/@jsquash/jpeg';
+    const JSQUASH_JPEG_MODULE_URL = 'https://esm.sh/@jsquash/jpeg';
+    const JSQUASH_WEBP_MODULE_URL = 'https://esm.sh/@jsquash/webp';
 
     const state = {
       file: null,
       quality: 80,
       running: false,
-      jsquashEncodePromise: null,
+      jsquashJpegEncodePromise: null,
+      jsquashWebpEncodePromise: null,
       downloadUrls: [],
     };
 
@@ -348,21 +354,33 @@
       return cleaned.replace(/[^a-zA-Z0-9._-]+/g, '_');
     }
 
-    function buildDownloadName(originalFilename, method, quality, width, height) {
+    function buildDownloadName(originalFilename, method, quality, width, height, extension) {
       const baseName = getBaseFileName(originalFilename);
-      return `${baseName}-${method}-q${quality}-${width}x${height}.jpg`;
+      return `${baseName}-${method}-q${quality}-${width}x${height}.${extension}`;
     }
 
-    async function getJsquashEncode() {
-      if (!state.jsquashEncodePromise) {
-        state.jsquashEncodePromise = import(JSQUASH_MODULE_URL).then((mod) => {
+    async function getJsquashJpegEncode() {
+      if (!state.jsquashJpegEncodePromise) {
+        state.jsquashJpegEncodePromise = import(JSQUASH_JPEG_MODULE_URL).then((mod) => {
           if (typeof mod.encode !== 'function') {
             throw new Error('Не найден export encode в @jsquash/jpeg');
           }
           return mod.encode;
         });
       }
-      return await state.jsquashEncodePromise;
+      return await state.jsquashJpegEncodePromise;
+    }
+
+    async function getJsquashWebpEncode() {
+      if (!state.jsquashWebpEncodePromise) {
+        state.jsquashWebpEncodePromise = import(JSQUASH_WEBP_MODULE_URL).then((mod) => {
+          if (typeof mod.encode !== 'function') {
+            throw new Error('Не найден export encode в @jsquash/webp');
+          }
+          return mod.encode;
+        });
+      }
+      return await state.jsquashWebpEncodePromise;
     }
 
     async function blobToDataUrl(blob) {
@@ -412,6 +430,13 @@
       return await response.blob();
     }
 
+    async function getBlobSignature(blob, length = 16) {
+      const bytes = new Uint8Array(await blob.slice(0, length).arrayBuffer());
+      return Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join(' ');
+    }
+
     async function canvasToBlob(canvas, mimeType, quality) {
       const normalizedQuality = Math.max(0, Math.min(1, quality));
 
@@ -423,6 +448,8 @@
 
           if (blob && blob.size > 0) {
             if (mimeType === 'image/jpeg' && blob.type && blob.type !== 'image/jpeg') {
+              // fallback below
+            } else if (mimeType === 'image/webp' && blob.type && blob.type !== 'image/webp') {
               // fallback below
             } else {
               return blob;
@@ -436,7 +463,7 @@
       const dataUrl = canvas.toDataURL(mimeType, normalizedQuality);
       const blob = await dataUrlToBlob(dataUrl);
       if (!blob || blob.size === 0) {
-        throw new Error('Не удалось получить Blob из canvas через toBlob/toDataURL.');
+        throw new Error(`Не удалось получить Blob из canvas для ${mimeType}.`);
       }
       return blob;
     }
@@ -460,8 +487,8 @@
       }
     }
 
-    async function runJsquash(file, quality) {
-      const encode = await getJsquashEncode();
+    async function runJsquashJpeg(file, quality) {
+      const encode = await getJsquashJpegEncode();
       const started = performance.now();
       const bitmap = await decodeBitmap(file);
       try {
@@ -480,10 +507,13 @@
         const previewUrl = await blobToDataUrl(blob);
         const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
 
+        const blobType = blob.type || 'application/octet-stream';
+        const blobSignature = await getBlobSignature(blob);
+
         return {
-          key: 'jsquash',
+          key: 'jsquash-jpeg',
           name: '@jsquash/jpeg',
-          source: 'full pipeline',
+          source: 'JPEG via WASM',
           ok: true,
           size: blob.size,
           width: imageData.width,
@@ -491,14 +521,16 @@
           durationMs: performance.now() - started,
           previewUrl,
           downloadUrl,
-          downloadName: buildDownloadName(file.name, 'jsquash', quality, imageData.width, imageData.height),
+          downloadName: buildDownloadName(file.name, 'jsquash-jpeg', quality, imageData.width, imageData.height, 'jpg'),
+          blobType,
+          blobSignature,
         };
       } finally {
         bitmap.close?.();
       }
     }
 
-    async function runCanvasMethod(file, quality) {
+    async function runCanvasJpeg(file, quality) {
       const started = performance.now();
       const bitmap = await decodeBitmap(file);
       try {
@@ -508,10 +540,13 @@
         const previewUrl = await blobToDataUrl(blob);
         const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
 
+        const blobType = blob.type || 'application/octet-stream';
+        const blobSignature = await getBlobSignature(blob);
+
         return {
-          key: 'canvas',
-          name: 'canvas.toBlob("image")',
-          source: 'full pipeline',
+          key: 'canvas-jpeg',
+          name: 'canvas.toBlob("image/jpeg")',
+          source: 'JPEG via browser',
           ok: true,
           size: blob.size,
           width: canvas.width,
@@ -519,7 +554,85 @@
           durationMs: performance.now() - started,
           previewUrl,
           downloadUrl,
-          downloadName: buildDownloadName(file.name, 'canvas', quality, canvas.width, canvas.height),
+          downloadName: buildDownloadName(file.name, 'canvas-jpeg', quality, canvas.width, canvas.height, 'jpg'),
+          blobType,
+          blobSignature,
+        };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function runJsquashWebp(file, quality) {
+      const encode = await getJsquashWebpEncode();
+      const started = performance.now();
+      const bitmap = await decodeBitmap(file);
+      try {
+        const { canvas, ctx } = makeCanvas(bitmap.width, bitmap.height);
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+        const encoded = await encode(
+          {
+            data: imageData.data,
+            width: imageData.width,
+            height: imageData.height,
+          },
+          { quality }
+        );
+        const blob = new Blob([encoded], { type: 'image/webp' });
+        const previewUrl = await blobToDataUrl(blob);
+        const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
+
+        const blobType = blob.type || 'application/octet-stream';
+        const blobSignature = await getBlobSignature(blob);
+
+        return {
+          key: 'jsquash-webp',
+          name: '@jsquash/webp',
+          source: 'WebP via WASM',
+          ok: true,
+          size: blob.size,
+          width: imageData.width,
+          height: imageData.height,
+          durationMs: performance.now() - started,
+          previewUrl,
+          downloadUrl,
+          downloadName: buildDownloadName(file.name, 'jsquash-webp', quality, imageData.width, imageData.height, 'webp'),
+          blobType,
+          blobSignature,
+        };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function runCanvasWebp(file, quality) {
+      const started = performance.now();
+      const bitmap = await decodeBitmap(file);
+      try {
+        const { canvas, ctx } = makeCanvas(bitmap.width, bitmap.height);
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        const blob = await canvasToBlob(canvas, 'image/webp', quality / 100);
+        const previewUrl = await blobToDataUrl(blob);
+        const downloadUrl = registerDownloadUrl(URL.createObjectURL(blob));
+
+        const blobType = blob.type || 'application/octet-stream';
+        const blobSignature = await getBlobSignature(blob);
+
+        return {
+          key: 'canvas-webp',
+          name: 'canvas.toBlob("image/webp")',
+          source: 'WebP via browser',
+          ok: true,
+          size: blob.size,
+          width: canvas.width,
+          height: canvas.height,
+          durationMs: performance.now() - started,
+          previewUrl,
+          downloadUrl,
+          downloadName: buildDownloadName(file.name, 'canvas-webp', quality, canvas.width, canvas.height, 'webp'),
+          blobType,
+          blobSignature,
         };
       } finally {
         bitmap.close?.();
@@ -554,6 +667,8 @@
           <div class="meta">
             ${metricHtml('Размер', formatBytes(item.size))}
             ${item.durationMs ? metricHtml('Время выполнения', formatMs(item.durationMs)) : ''}
+            ${item.blobType ? metricHtml('Blob type', item.blobType) : ''}
+            ${item.blobSignature ? metricHtml('Сигнатура', `<code>${item.blobSignature}</code>`) : ''}
             ${item.downloadUrl ? metricHtml('Скачать', `<a class="download-link" href="${item.downloadUrl}" download="${item.downloadName}">${item.downloadName}</a>`) : ''}
             ${item.note ? metricHtml('Разрешение', item.note) : ''}
             ${!item.ok && item.error ? `<div class="error-box">${item.error}</div>` : ''}
@@ -583,8 +698,8 @@
       els.cards.innerHTML = '';
 
       try {
-        setStatus('Загрузка кодека @jsquash/jpeg...');
-        await getJsquashEncode();
+        setStatus('Загрузка кодеков @jsquash/jpeg и @jsquash/webp...');
+        await Promise.all([getJsquashJpegEncode(), getJsquashWebpEncode()]);
 
         setStatus('Чтение оригинального файла...');
         const originalInfo = await readOriginalFileInfo(state.file);
@@ -601,13 +716,21 @@
 
         const quality = clampQuality(state.quality);
 
-        setStatus('1/2 — запуск @jsquash/jpeg...');
-        const r1 = await runJsquash(state.file, quality);
+        setStatus('1/4 — запуск @jsquash/jpeg...');
+        const r1 = await runJsquashJpeg(state.file, quality);
         renderCards([original, r1]);
 
-        setStatus('2/2 — запуск canvas.toBlob("image")...');
-        const r2 = await runCanvasMethod(state.file, quality);
+        setStatus('2/4 — запуск canvas.toBlob("image/jpeg")...');
+        const r2 = await runCanvasJpeg(state.file, quality);
         renderCards([original, r1, r2]);
+
+        setStatus('3/4 — запуск @jsquash/webp...');
+        const r3 = await runJsquashWebp(state.file, quality);
+        renderCards([original, r1, r2, r3]);
+
+        setStatus('4/4 — запуск canvas.toBlob("image/webp")...');
+        const r4 = await runCanvasWebp(state.file, quality);
+        renderCards([original, r1, r2, r3, r4]);
 
         setStatus('Сравнение завершено.');
       } catch (error) {
