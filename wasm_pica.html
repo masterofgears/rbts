@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pica + jSquash: подгон под размер</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #0b1220;
+      --border: #243046;
+      --text: #e5eefc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --error: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .mt-16 { margin-top: 16px; }
+    .mt-12 { margin-top: 12px; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="file"], input[type="number"], input[type="range"], button {
+      width: 100%;
+    }
+
+    input[type="file"], input[type="number"] {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .range-value {
+      min-width: 40px;
+      text-align: right;
+      color: var(--text);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #082032;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      min-width: 180px;
+    }
+
+    .btn.secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      min-height: 42px;
+      white-space: pre-wrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      align-self: start;
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    .badge.error { color: var(--error); }
+
+    .preview {
+      width: 100%;
+      aspect-ratio: 16/10;
+      object-fit: contain;
+      display: block;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .preview-empty {
+      width: 100%;
+      aspect-ratio: 16/10;
+      display: grid;
+      place-items: center;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      color: var(--error);
+      text-align: center;
+      padding: 12px;
+    }
+
+    .meta {
+      padding: 10px 14px 14px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric:last-child { border-bottom: none; }
+    .metric-label { color: var(--muted); font-size: 12px; }
+    .metric-value { color: var(--text); font-size: 13px; text-align: right; }
+
+    .download-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .download-link:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      color: #bae6fd;
+      font-size: 12px;
+    }
+
+    .error-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(251, 113, 133, 0.08);
+      border: 1px solid rgba(251, 113, 133, 0.18);
+      color: #fecdd3;
+      font-size: 12px;
+    }
+
+    code {
+      background: var(--panel-2);
+      padding: 1px 5px;
+      border-radius: 6px;
+      color: var(--text);
+    }
+
+    @media (max-width: 900px) {
+      .controls, .field-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>Pica + jSquash: сжатие под целевой размер</h1>
+      <p>
+        Чистый JavaScript для запуска в браузере. Исходное изображение уменьшается по разрешению через <code>pica</code>,
+        затем кодируется через <code>@jsquash/jpeg</code> или <code>@jsquash/webp</code> до целевого размера в KB.
+      </p>
+      <p class="mt-12">
+        Рекомендуется запускать файл через локальный статический сервер, например <code>python -m http.server</code>.
+      </p>
+    </div>
+
+    <div class="panel mt-16">
+      <div class="controls">
+        <div class="field">
+          <label for="fileInput">Изображение</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div id="fileLabel" class="metric-value" style="text-align:left;color:var(--muted)">Файл не выбран</div>
+        </div>
+
+        <div class="field">
+          <label for="qualityInput">Начальное качество</label>
+          <div class="range-row">
+            <input id="qualityInput" type="range" min="40" max="95" step="1" value="80" />
+            <div id="qualityValue" class="range-value">80</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="targetKbInput">Целевой размер, KB</label>
+          <input id="targetKbInput" type="number" min="1" step="1" value="1024" />
+        </div>
+      </div>
+
+      <div class="field-row mt-12">
+        <div class="field">
+          <label for="minQualityInput">Минимальное качество</label>
+          <input id="minQualityInput" type="number" min="1" max="95" step="1" value="45" />
+        </div>
+        <div class="field">
+          <label for="qualityStepInput">Шаг уменьшения качества</label>
+          <input id="qualityStepInput" type="number" min="1" max="20" step="1" value="5" />
+        </div>
+        <div class="field">
+          <label for="scaleStepInput">Шаг уменьшения масштаба</label>
+          <input id="scaleStepInput" type="number" min="0.5" max="0.95" step="0.01" value="0.85" />
+        </div>
+        <div class="field">
+          <label for="maxAttemptsInput">Максимум попыток</label>
+          <input id="maxAttemptsInput" type="number" min="1" max="100" step="1" value="12" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="runJpegBtn" class="btn">Сжать в JPEG</button>
+        <button id="runWebpBtn" class="btn">Сжать в WebP</button>
+        <button id="runBothBtn" class="btn secondary">Сжать оба формата</button>
+      </div>
+
+      <div id="status" class="status">Выберите изображение и запустите сжатие.</div>
+    </div>
+
+    <div id="cards" class="cards"></div>
+  </div>
+
+  <script type="module">
+    import picaFactory from "https://esm.sh/pica";
+    import { encode as encodeJpeg } from "https://esm.sh/@jsquash/jpeg";
+    import { encode as encodeWebp } from "https://esm.sh/@jsquash/webp";
+
+    const pica = picaFactory();
+
+    const state = {
+      file: null,
+      running: false,
+      downloadUrls: [],
+    };
+
+    const els = {
+      fileInput: document.getElementById("fileInput"),
+      fileLabel: document.getElementById("fileLabel"),
+      qualityInput: document.getElementById("qualityInput"),
+      qualityValue: document.getElementById("qualityValue"),
+      targetKbInput: document.getElementById("targetKbInput"),
+      minQualityInput: document.getElementById("minQualityInput"),
+      qualityStepInput: document.getElementById("qualityStepInput"),
+      scaleStepInput: document.getElementById("scaleStepInput"),
+      maxAttemptsInput: document.getElementById("maxAttemptsInput"),
+      runJpegBtn: document.getElementById("runJpegBtn"),
+      runWebpBtn: document.getElementById("runWebpBtn"),
+      runBothBtn: document.getElementById("runBothBtn"),
+      status: document.getElementById("status"),
+      cards: document.getElementById("cards"),
+    };
+
+    function setStatus(text) {
+      els.status.textContent = text;
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return "—";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function formatMs(ms) {
+      if (!Number.isFinite(ms)) return "—";
+      return `${ms.toFixed(1)} ms`;
+    }
+
+    function clampInt(value, min, max) {
+      const parsed = Math.round(Number(value));
+      if (!Number.isFinite(parsed)) return min;
+      return Math.max(min, Math.min(max, parsed));
+    }
+
+    function clampPositive(value, fallback) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+      return parsed;
+    }
+
+    function runInternalTests() {
+      const cases = [
+        { actual: clampInt(10.4, 1, 100), expected: 10, name: "round down" },
+        { actual: clampInt(120, 1, 95), expected: 95, name: "max clamp" },
+        { actual: clampInt(-1, 1, 95), expected: 1, name: "min clamp" },
+      ];
+
+      for (const test of cases) {
+        if (test.actual !== test.expected) {
+          throw new Error(`Internal test failed: ${test.name}`);
+        }
+      }
+    }
+
+    function resetDownloadUrls() {
+      for (const url of state.downloadUrls) {
+        URL.revokeObjectURL(url);
+      }
+      state.downloadUrls = [];
+    }
+
+    function registerDownloadUrl(url) {
+      state.downloadUrls.push(url);
+      return url;
+    }
+
+    function getBaseFileName(filename) {
+      const cleaned = String(filename || "image").replace(/\.[^.]+$/, "");
+      return cleaned.replace(/[^a-zA-Z0-9._-]+/g, "_");
+    }
+
+    function buildOutputFileName(originalFilename, method, quality, width, height, extension) {
+      const baseName = getBaseFileName(originalFilename);
+      return `${baseName}-${method}-q${quality}-${width}x${height}.${extension}`;
+    }
+
+    function makeCanvas(width, height) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(width));
+      canvas.height = Math.max(1, Math.round(height));
+      return canvas;
+    }
+
+    async function blobToDataUrl(blob) {
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") resolve(reader.result);
+          else reject(new Error("Не удалось получить data URL."));
+        };
+        reader.onerror = () => reject(reader.error || new Error("FileReader error"));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function fileToDataUrl(file) {
+      return await blobToDataUrl(file);
+    }
+
+    async function decodeBitmap(file) {
+      if (typeof createImageBitmap === "function") {
+        try {
+          return await createImageBitmap(file);
+        } catch {
+          // fallback below
+        }
+      }
+
+      const dataUrl = await fileToDataUrl(file);
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error("Не удалось декодировать изображение через HTMLImageElement."));
+        el.src = dataUrl;
+      });
+
+      const canvas = makeCanvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("2D canvas is not available");
+      ctx.drawImage(img, 0, 0);
+      return await createImageBitmap(canvas);
+    }
+
+    async function prepareSourceCanvas(file) {
+      const bitmap = await decodeBitmap(file);
+      try {
+        const canvas = makeCanvas(bitmap.width, bitmap.height);
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) throw new Error("2D canvas is not available");
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        return canvas;
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function resizeWithPica(sourceCanvas, width, height) {
+      const targetCanvas = makeCanvas(width, height);
+      await pica.resize(sourceCanvas, targetCanvas);
+      return targetCanvas;
+    }
+
+    function getImageData(canvas) {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("2D canvas is not available");
+      return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    async function encodeCanvasToJpegBlob(canvas, quality) {
+      const imageData = getImageData(canvas);
+      const encoded = await encodeJpeg(
+        {
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height,
+        },
+        { quality }
+      );
+      return new Blob([encoded], { type: "image/jpeg" });
+    }
+
+    async function encodeCanvasToWebpBlob(canvas, quality) {
+      const imageData = getImageData(canvas);
+      const encoded = await encodeWebp(
+        {
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height,
+        },
+        { quality }
+      );
+      return new Blob([encoded], { type: "image/webp" });
+    }
+
+    function normalizeOptions(format) {
+      const initialQuality = clampInt(
+        els.qualityInput.value,
+        format === "jpeg" ? 40 : 1,
+        95,
+      );
+
+      const minQuality = clampInt(
+        els.minQualityInput.value,
+        format === "jpeg" ? 40 : 1,
+        95,
+      );
+
+      return {
+        targetKB: clampPositive(els.targetKbInput.value, 1024),
+        initialQuality,
+        minQuality: Math.min(initialQuality, minQuality),
+        qualityStep: clampInt(els.qualityStepInput.value, 1, 20),
+        initialScale: 1,
+        scaleStep: Math.max(0.5, Math.min(0.95, Number(els.scaleStepInput.value || 0.85))),
+        minWidth: 640,
+        minHeight: 640,
+        maxAttempts: clampInt(els.maxAttemptsInput.value, 1, 100),
+      };
+    }
+
+    async function compressWithTargetSize({ file, format, method, encodeFn }) {
+      const cfg = normalizeOptions(format);
+      const targetBytes = Math.round(cfg.targetKB * 1024);
+      const sourceCanvas = await prepareSourceCanvas(file);
+      const originalWidth = sourceCanvas.width;
+      const originalHeight = sourceCanvas.height;
+
+      let best = null;
+      let attempt = 0;
+      let scale = cfg.initialScale;
+      let quality = cfg.initialQuality;
+
+      while (attempt < cfg.maxAttempts) {
+        const width = Math.max(cfg.minWidth, Math.round(originalWidth * scale));
+        const height = Math.max(cfg.minHeight, Math.round(originalHeight * scale));
+
+        const workingCanvas =
+          width === originalWidth && height === originalHeight
+            ? sourceCanvas
+            : await resizeWithPica(sourceCanvas, width, height);
+
+        const started = performance.now();
+        const blob = await encodeFn(workingCanvas, quality);
+        const durationMs = performance.now() - started;
+        const success = blob.size <= targetBytes;
+
+        const candidate = {
+          key: `${method}-${attempt + 1}`,
+          name: format === "jpeg" ? "JPEG" : "WebP",
+          source: method,
+          ok: true,
+          sizeBytes: blob.size,
+          sizeKB: Number((blob.size / 1024).toFixed(1)),
+          targetKB: Number((targetBytes / 1024).toFixed(1)),
+          width: workingCanvas.width,
+          height: workingCanvas.height,
+          quality,
+          scale,
+          attempt: attempt + 1,
+          durationMs,
+          blob,
+          success,
+          format,
+          mimeType: blob.type,
+        };
+
+        if (!best || candidate.sizeBytes < best.sizeBytes) {
+          best = candidate;
+        }
+
+        if (candidate.success) {
+          return candidate;
+        }
+
+        if (quality > cfg.minQuality) {
+          quality = Math.max(cfg.minQuality, quality - cfg.qualityStep);
+        } else {
+          const nextScale = scale * cfg.scaleStep;
+          const projectedWidth = Math.round(originalWidth * nextScale);
+          const projectedHeight = Math.round(originalHeight * nextScale);
+
+          if (projectedWidth < cfg.minWidth || projectedHeight < cfg.minHeight) {
+            break;
+          }
+
+          scale = nextScale;
+          quality = cfg.initialQuality;
+        }
+
+        attempt += 1;
+      }
+
+      return {
+        ...best,
+        success: false,
+        reason: `Не удалось достигнуть цели ${cfg.targetKB} KB в пределах ограничений quality/resize`,
+      };
+    }
+
+    async function makeCardResult(result, file, methodKey) {
+      const previewUrl = await blobToDataUrl(result.blob);
+      const extension = result.format === "jpeg" ? "jpg" : "webp";
+      const filename = buildOutputFileName(
+        file.name,
+        methodKey,
+        result.quality,
+        result.width,
+        result.height,
+        extension,
+      );
+      const downloadUrl = registerDownloadUrl(URL.createObjectURL(result.blob));
+
+      return {
+        key: `${methodKey}-${result.attempt}`,
+        name: result.format === "jpeg" ? "JPEG результат" : "WebP результат",
+        source: methodKey,
+        ok: result.success,
+        size: result.sizeBytes,
+        width: result.width,
+        height: result.height,
+        durationMs: result.durationMs,
+        previewUrl,
+        downloadUrl,
+        downloadName: filename,
+        note: `Попытка: ${result.attempt} · quality: ${result.quality} · target: ${result.targetKB} KB · result: ${result.sizeKB} KB`,
+        error: result.success ? "" : result.reason,
+      };
+    }
+
+    function metricHtml(label, value) {
+      return `
+        <div class="metric">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+        </div>
+      `;
+    }
+
+    function renderCard(item) {
+      const badgeClass = item.ok ? "ok" : item.error ? "warn" : "error";
+      const badgeText = item.ok ? "OK" : item.error ? "Лимит не достигнут" : "Ошибка";
+      const preview = item.previewUrl
+        ? `<img class="preview" src="${item.previewUrl}" alt="${item.name}" />`
+        : `<div class="preview-empty">${item.error || "Нет результата"}</div>`;
+
+      return `
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">${item.name}</div>
+              <div class="card-subtitle">${item.source || ""}</div>
+            </div>
+            <div class="badge ${badgeClass}">${badgeText}</div>
+          </div>
+          ${preview}
+          <div class="meta">
+            ${metricHtml("Размер", formatBytes(item.size))}
+            ${metricHtml("Разрешение", `${item.width} × ${item.height}`)}
+            ${metricHtml("Время encode", formatMs(item.durationMs))}
+            ${item.downloadUrl ? metricHtml("Скачать", `<a class="download-link" href="${item.downloadUrl}" download="${item.downloadName}">${item.downloadName}</a>`) : ""}
+            ${item.note ? `<div class="note">${item.note}</div>` : ""}
+            ${item.error && !item.ok ? `<div class="error-box">${item.error}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCards(items) {
+      els.cards.innerHTML = items.filter(Boolean).map(renderCard).join("");
+    }
+
+    function setRunning(value) {
+      state.running = value;
+      els.runJpegBtn.disabled = value || !state.file;
+      els.runWebpBtn.disabled = value || !state.file;
+      els.runBothBtn.disabled = value || !state.file;
+    }
+
+    async function renderOriginalCard(file) {
+      const previewUrl = await blobToDataUrl(file);
+      const bitmap = await decodeBitmap(file);
+      try {
+        return {
+          key: "original",
+          name: "Оригинал",
+          source: "Исходный файл",
+          ok: true,
+          size: file.size,
+          width: bitmap.width,
+          height: bitmap.height,
+          durationMs: 0,
+          previewUrl,
+          note: `Исходное разрешение: ${bitmap.width} × ${bitmap.height}`,
+        };
+      } finally {
+        bitmap.close?.();
+      }
+    }
+
+    async function runJpeg() {
+      if (!state.file) {
+        setStatus("Сначала выберите изображение.");
+        return;
+      }
+
+      setRunning(true);
+      resetDownloadUrls();
+      els.cards.innerHTML = "";
+
+      try {
+        setStatus("Чтение исходного файла...");
+        const originalCard = await renderOriginalCard(state.file);
+        renderCards([originalCard]);
+
+        setStatus("Сжатие в JPEG через pica + @jsquash/jpeg...");
+        const result = await compressWithTargetSize({
+          file: state.file,
+          format: "jpeg",
+          method: "pica + @jsquash/jpeg",
+          encodeFn: encodeCanvasToJpegBlob,
+        });
+        const jpegCard = await makeCardResult(result, state.file, "pica-jsquash-jpeg");
+        renderCards([originalCard, jpegCard]);
+
+        setStatus(result.success ? "JPEG: цель достигнута." : "JPEG: получен лучший результат, но лимит не достигнут.");
+      } catch (error) {
+        setStatus(`Ошибка JPEG: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    async function runWebp() {
+      if (!state.file) {
+        setStatus("Сначала выберите изображение.");
+        return;
+      }
+
+      setRunning(true);
+      resetDownloadUrls();
+      els.cards.innerHTML = "";
+
+      try {
+        setStatus("Чтение исходного файла...");
+        const originalCard = await renderOriginalCard(state.file);
+        renderCards([originalCard]);
+
+        setStatus("Сжатие в WebP через pica + @jsquash/webp...");
+        const result = await compressWithTargetSize({
+          file: state.file,
+          format: "webp",
+          method: "pica + @jsquash/webp",
+          encodeFn: encodeCanvasToWebpBlob,
+        });
+        const webpCard = await makeCardResult(result, state.file, "pica-jsquash-webp");
+        renderCards([originalCard, webpCard]);
+
+        setStatus(result.success ? "WebP: цель достигнута." : "WebP: получен лучший результат, но лимит не достигнут.");
+      } catch (error) {
+        setStatus(`Ошибка WebP: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    async function runBoth() {
+      if (!state.file) {
+        setStatus("Сначала выберите изображение.");
+        return;
+      }
+
+      setRunning(true);
+      resetDownloadUrls();
+      els.cards.innerHTML = "";
+
+      try {
+        setStatus("Чтение исходного файла...");
+        const originalCard = await renderOriginalCard(state.file);
+        renderCards([originalCard]);
+
+        setStatus("1/2 — JPEG через pica + @jsquash/jpeg...");
+        const jpegResult = await compressWithTargetSize({
+          file: state.file,
+          format: "jpeg",
+          method: "pica + @jsquash/jpeg",
+          encodeFn: encodeCanvasToJpegBlob,
+        });
+        const jpegCard = await makeCardResult(jpegResult, state.file, "pica-jsquash-jpeg");
+        renderCards([originalCard, jpegCard]);
+
+        setStatus("2/2 — WebP через pica + @jsquash/webp...");
+        const webpResult = await compressWithTargetSize({
+          file: state.file,
+          format: "webp",
+          method: "pica + @jsquash/webp",
+          encodeFn: encodeCanvasToWebpBlob,
+        });
+        const webpCard = await makeCardResult(webpResult, state.file, "pica-jsquash-webp");
+        renderCards([originalCard, jpegCard, webpCard]);
+
+        setStatus("Сжатие завершено.");
+      } catch (error) {
+        setStatus(`Ошибка: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    els.fileInput.addEventListener("change", (event) => {
+      resetDownloadUrls();
+      state.file = event.target.files?.[0] || null;
+      els.fileLabel.textContent = state.file
+        ? `${state.file.name} · ${formatBytes(state.file.size)}`
+        : "Файл не выбран";
+      els.cards.innerHTML = "";
+      setStatus("Выберите изображение и запустите сжатие.");
+      setRunning(false);
+    });
+
+    els.qualityInput.addEventListener("input", (event) => {
+      els.qualityValue.textContent = String(event.target.value);
+    });
+
+    els.runJpegBtn.addEventListener("click", runJpeg);
+    els.runWebpBtn.addEventListener("click", runWebp);
+    els.runBothBtn.addEventListener("click", runBoth);
+
+    runInternalTests();
+    setRunning(false);
+  </script>
+</body>
+</html>
