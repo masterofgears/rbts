@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pica + jSquash: подгон под размер</title>
+  <title>Pica + jSquash: сжатие до размера</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -67,7 +67,7 @@
 
     .field-row {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
     }
 
@@ -102,9 +102,9 @@
     }
 
     .actions {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      flex-wrap: wrap;
       margin-top: 12px;
     }
 
@@ -116,7 +116,7 @@
       padding: 10px 14px;
       cursor: pointer;
       font-weight: 700;
-      min-width: 180px;
+      min-width: 0;
     }
 
     .btn.secondary {
@@ -263,8 +263,16 @@
       color: var(--text);
     }
 
+    @media (max-width: 1100px) {
+      .field-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     @media (max-width: 900px) {
-      .controls, .field-row {
+      .controls,
+      .field-row,
+      .actions {
         grid-template-columns: 1fr;
       }
     }
@@ -277,9 +285,6 @@
       <p>
         Чистый JavaScript для запуска в браузере. Исходное изображение уменьшается по разрешению через <code>pica</code>,
         затем кодируется через <code>@jsquash/jpeg</code> или <code>@jsquash/webp</code> до целевого размера в KB.
-      </p>
-      <p class="mt-12">
-        Рекомендуется запускать файл через локальный статический сервер, например <code>python -m http.server</code>.
       </p>
     </div>
 
@@ -308,7 +313,7 @@
       <div class="field-row mt-12">
         <div class="field">
           <label for="minQualityInput">Минимальное качество</label>
-          <input id="minQualityInput" type="number" min="1" max="95" step="1" value="45" />
+          <input id="minQualityInput" type="number" min="1" max="95" step="1" value="50" />
         </div>
         <div class="field">
           <label for="qualityStepInput">Шаг уменьшения качества</label>
@@ -316,7 +321,7 @@
         </div>
         <div class="field">
           <label for="scaleStepInput">Шаг уменьшения масштаба</label>
-          <input id="scaleStepInput" type="number" min="0.5" max="0.95" step="0.01" value="0.85" />
+          <input id="scaleStepInput" type="number" min="0.5" max="0.95" step="0.01" value="0.75" />
         </div>
         <div class="field">
           <label for="maxAttemptsInput">Максимум попыток</label>
@@ -547,7 +552,7 @@
         minQuality: Math.min(initialQuality, minQuality),
         qualityStep: clampInt(els.qualityStepInput.value, 1, 20),
         initialScale: 1,
-        scaleStep: Math.max(0.5, Math.min(0.95, Number(els.scaleStepInput.value || 0.85))),
+        scaleStep: Math.max(0.5, Math.min(0.95, Number(els.scaleStepInput.value || 0.75))),
         minWidth: 640,
         minHeight: 640,
         maxAttempts: clampInt(els.maxAttemptsInput.value, 1, 100),
